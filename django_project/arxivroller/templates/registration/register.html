@@ -1,0 +1,77 @@
+{% extends "registration/base.html" %}
+
+{% block logincontent %}
+
+{% if form.errors %}
+<div class="alert alert-warning" role="alert">
+<ul class="errorlist">
+{% for error in form.non_field_errors %}
+<li><strong>{{ error|escape }}</strong></li>
+{% endfor %}
+{% for field in form %}
+      {% for error in field.errors %}
+      <li><strong>{{field.label}}: {{ error|escape }}</strong></li>
+      {% endfor %}
+{% endfor %}
+</ul>
+</div>
+{% endif %}
+
+<form method="post" action="{% url 'user_register' %}" autocomplete="on">
+    {% csrf_token %}
+
+    <!-- <p class="required"><label class="required" for="id_username">Username:</label> <input type="text" name="username" maxlength="150" autocapitalize="none" autocomplete="username" autofocus required id="id_username"> <span class="helptext">Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.</span></p>
+    <p class="required"><label class="required" for="id_email">Email address:</label> <input type="email" name="email" maxlength="254" required id="id_email"></p>
+    <p class="required"><label class="required" for="id_password1">Password:</label> <input type="password" name="password1" autocomplete="new-password" required id="id_password1"> <span class="helptext"><ul><li>Your password can’t be too similar to your other personal information.</li><li>Your password must contain at least 8 characters.</li><li>Your password can’t be a commonly used password.</li><li>Your password can’t be entirely numeric.</li></ul></span></p>
+    <p class="required"><label class="required" for="id_password2">Password confirmation:</label> <input type="password" name="password2" autocomplete="new-password" required id="id_password2"> <span class="helptext">Enter the same password as before, for verification.</span></p>
+     -->
+    <div class="row mb-3">
+      <div class="col-sm-10">
+        <label for="id_username" class="col-sm-2 col-form-label">Username:</label>
+        <div class="input-group">
+        <!-- <span class="input-group-text">Username</span> -->
+        <input type="text" class="form-control" name="username" autofocus autocapitalize="none" autocomplete="username" maxlength="150" required id="id_username">
+        </div>
+        
+        {% if form.username.help_text %}
+        <div class="help">{{ form.username.help_text|safe }}</div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="row mb-3">
+      <div class="col-sm-10">
+        <label for="id_email" class="col-sm-2 col-form-label">Email:</label>
+        <div class="input-group">
+        <!-- <span class="input-group-text">Email</span> -->
+        <input type="email" class="form-control" name="email" autofocus autocapitalize="none" autocomplete="email" maxlength="150" required id="id_email">
+        </div>
+        {% if form.email.help_text %}
+        <div class="help">{{ form.email.help_text|safe }}</div>
+        {% endif %}
+       </div>
+    </div>
+    <div class="row mb-3">
+      <div class="col-sm-10">
+        <label for="id_password1" class="col-sm-2 col-form-label">Password:</label>
+        <div class="input-group">
+        <!-- <span class="input-group-text">Password</span> -->
+        <input type="password" class="form-control" name="password1" required id="id_password1">
+        </div>
+        {% if form.password1.help_text %}
+        <div class="help">{{ form.password1.help_text|safe }}</div>
+        {% endif %}
+        <label for="id_password2" class="col-sm-2 col-form-label">Confirm Password:</label>
+        <div class="input-group">
+        <!-- <span class="input-group-text">Repeat</span> -->
+        <input type="password" class="form-control" name="password2" required id="id_password2">
+        </div>
+        {% if form.password2.help_text %}
+        <div class="help">{{ form.password2.help_text|safe }}</div>
+        {% endif %}
+      </div>
+    </div>
+    <button type="submit" class="btn btn-primary">Register</button>
+    <input type="hidden" name="next" value="{{ next }}" />
+</form>
+
+{% endblock %}

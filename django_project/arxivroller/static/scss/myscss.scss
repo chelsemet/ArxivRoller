@@ -1,0 +1,337 @@
+
+$primary: Indigo;
+$light: #e9ecef;
+$secondary: #6c757d;
+// $danger: #ff4136;
+// $theme-colors: (
+//   "primary": $primary,
+//   "danger": $danger
+// );
+
+@import "../bootstrap/scss/bootstrap";
+// @import "./mdb.free";
+
+$font-size-xs: $font-size-base * .6 !default;
+$border-radius-xs:            .12rem !default;
+
+// small button
+
+$input-btn-padding-y-xs:      .14rem !default;
+$input-btn-padding-x-xs:      .28rem !default;
+$input-btn-font-size-xs:      $font-size-xs !default;
+
+$btn-padding-y-xs:            $input-btn-padding-y-xs !default;
+$btn-padding-x-xs:            $input-btn-padding-x-xs !default;
+$btn-font-size-xs:            $input-btn-font-size-xs !default;
+$btn-border-radius-xs:        $border-radius-xs !default;
+
+$btn-rounded-border-radius: 10rem !default;
+
+$btn-floating-width: 2.3125rem !default;
+$btn-floating-height: 2.3125rem !default;
+$btn-floating-icon-width: 2.3125rem !default;
+$btn-floating-icon-line-height: 2.3125rem !default;
+
+$btn-floating-width-lg: 2.8125rem !default;
+$btn-floating-height-lg: 2.8125rem !default;
+$btn-floating-icon-width-lg: 2.8125rem !default;
+$btn-floating-icon-line-height-lg: 2.8125rem !default;
+
+$btn-floating-width-sm: 1.8125rem !default;
+$btn-floating-height-sm: 1.8125rem !default;
+$btn-floating-icon-width-sm: 1.8125rem !default;
+$btn-floating-icon-line-height-sm: 1.8125rem !default;
+
+$btn-outline-floating-icon-width: 2.0625rem !default;
+$btn-outline-floating-icon-line-height: 2.0625rem !default;
+
+$btn-outline-floating-icon-width-lg: 2.5625rem !default;
+$btn-outline-floating-icon-line-height-lg: 2.5625rem !default;
+
+$btn-outline-floating-icon-width-sm: 1.5625rem !default;
+$btn-outline-floating-icon-line-height-sm: 1.5625rem !default;
+
+$btn-floating-border-radius: 50% !default;
+
+$btn-block-spacing-y: 0.5rem !default;
+
+$fixed-action-btn-right: 2.1875rem !default;
+$fixed-action-btn-bottom: 2.1875rem !default;
+$fixed-action-btn-padding-top: 0.9375rem !default;
+$fixed-action-btn-li-margin-bottom: 1.5rem !default;
+
+$zindex-fixed-action-button: 1030 !default;
+
+.btn-xs {
+    @include button-size($btn-padding-y-xs, $btn-padding-x-xs, $btn-font-size-xs, $btn-border-radius-xs);
+  }
+
+.btn-group-xs > .btn { @extend .btn-xs; }
+.btn-xs + .dropdown-toggle-split {
+  padding-right: $btn-padding-x-xs * .75;
+  padding-left: $btn-padding-x-xs * .75;
+}
+
+
+//
+// Rounded option
+//
+
+.btn-rounded {
+  border-radius: $btn-rounded-border-radius;
+}
+
+//
+// Floating option
+//
+
+.btn-floating,
+[class*='btn-outline-'].btn-floating {
+  border-radius: $btn-floating-border-radius;
+  padding: 0;
+  position: relative;
+  &.btn-floating-semi {
+    border-top: 0;
+    border-radius: 0;
+  }
+  &.btn-floating-quater {
+    border-radius: 0;
+    border-bottom-right-radius: 100%;
+  }
+}
+
+.btn-floating, .btn-floating-quater {
+  width: $btn-floating-width;
+  height: $btn-floating-height;
+
+  &.btn-floating-semi {
+    height: $btn-floating-height / 2;
+    border-bottom-left-radius: $btn-floating-height / 2;
+    border-bottom-right-radius: $btn-floating-height / 2;
+    
+    .fas,
+    .far,
+    .fab {
+      width: $btn-floating-icon-width/2;
+      line-height: $btn-floating-icon-line-height/2;
+    }
+  }
+
+  .fas,
+  .far,
+  .fab {
+    width: $btn-floating-icon-width;
+    line-height: $btn-floating-icon-line-height;
+  }
+
+  &.btn-lg {
+    width: $btn-floating-width-lg;
+    height: $btn-floating-height-lg;
+    
+    &.btn-floating-semi {
+      height: $btn-floating-height-lg / 2;
+      border-bottom-left-radius: $btn-floating-height-lg / 2;
+      border-bottom-right-radius: $btn-floating-height-lg / 2;
+      .fas,
+      .far,
+      .fab {
+        width: $btn-floating-icon-width-lg/2;
+        line-height: $btn-floating-icon-line-height-lg/2;
+      }
+    }
+
+    .fas,
+    .far,
+    .fab {
+      width: $btn-floating-icon-width-lg;
+      line-height: $btn-floating-icon-line-height-lg;
+    }
+  }
+
+  &.btn-sm {
+    width: $btn-floating-width-sm;
+    height: $btn-floating-height-sm;
+
+    &.btn-floating-semi {
+      height: $btn-floating-height-sm / 2;
+      border-bottom-left-radius: $btn-floating-height-sm / 2;
+      border-bottom-right-radius: $btn-floating-height-sm / 2;
+      .fas,
+      .far,
+      .fab {
+        width: $btn-floating-icon-width-sm/2;
+        line-height: $btn-floating-icon-line-height-sm/2;
+      }
+    }
+
+    .fas,
+    .far,
+    .fab {
+      width: $btn-floating-icon-width-sm;
+      line-height: $btn-floating-icon-line-height-sm;
+    }
+  }
+}
+
+[class*='btn-outline-'].btn-floating,
+[class*='btn-outline-'].btn-floating-quater {
+  .fas,
+  .far,
+  .fab {
+    width: $btn-outline-floating-icon-width;
+    line-height: $btn-outline-floating-icon-line-height;
+  }
+
+  &.btn-floating-semi {
+    .fas,
+    .far,
+    .fab {
+      width: $btn-outline-floating-icon-width/2;
+      line-height: $btn-outline-floating-icon-line-height/2;
+    }
+  }
+
+  &.btn-lg {
+    .fas,
+    .far,
+    .fab {
+      width: $btn-outline-floating-icon-width-lg;
+      line-height: $btn-outline-floating-icon-line-height-lg;
+    }
+    
+    &.btn-floating-semi {
+      .fas,
+      .far,
+      .fab {
+        width: $btn-outline-floating-icon-width-lg/2;
+        line-height: $btn-outline-floating-icon-line-height-lg/2;
+      }
+    }
+  }
+
+  &.btn-sm {
+    .fas,
+    .far,
+    .fab {
+      width: $btn-outline-floating-icon-width-sm;
+      line-height: $btn-outline-floating-icon-line-height-sm;
+    }
+    &.btn-floating-semi {
+      .fas,
+      .far,
+      .fab {
+        width: $btn-outline-floating-icon-width-sm/2;
+        line-height: $btn-outline-floating-icon-line-height-sm/2;
+      }
+    }
+  }
+}
+
+//
+// Fixed option
+//
+
+.fixed-action-btn {
+  position: fixed;
+  right: $fixed-action-btn-right;
+  bottom: $fixed-action-btn-bottom;
+  z-index: $zindex-fixed-action-button;
+  display: flex;
+  flex-flow: column-reverse nowrap;
+  align-items: center;
+  padding: $fixed-action-btn-padding-top 20px 20px 20px;
+  margin-bottom: 0;
+  height: auto;
+  overflow: hidden;
+
+  &-lb {
+    // left buttom
+    @extend .fixed-action-btn;
+    left: $fixed-action-btn-right;
+    right: auto;
+  }
+  &-rt {
+    // right buttom
+    @extend .fixed-action-btn;
+    top: $fixed-action-btn-bottom;
+    bottom: auto;
+  }
+  &-lt {
+    // left top
+    @extend .fixed-action-btn;
+    left: $fixed-action-btn-right;
+    top: $fixed-action-btn-bottom;
+    right: auto;
+    bottom: auto;
+  }
+
+  & > .btn-floating {
+    position: relative;
+    transform: scale(1.2);
+    z-index: 10;
+  }
+
+  ul {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    margin: 0;
+    margin-bottom: 0;
+    text-align: center;
+    opacity: 0;
+    transition: transform 0.4s, opacity 0.4s;
+    z-index: -1;
+    li {
+      z-index: 0;
+      display: flex;
+      margin-right: auto;
+      margin-bottom: $fixed-action-btn-li-margin-bottom;
+      margin-left: auto;
+      &:first-of-type {
+        margin-top: $fixed-action-btn-li-margin-bottom / 2;
+      }
+    }
+    a {
+      &.btn {
+        opacity: 0;
+        transition: opacity 0.4s ease-in;
+        &.shown {
+          opacity: 1;
+        }
+      }
+    }
+  }
+  &.active ul {
+    opacity: 1;
+  }
+}
+
+
+
+.callout {
+  border-left: 1px solid $light;
+  border-left-width: 5px !important;
+  & + .bs-callout {
+    margin-top: -5px;
+  }
+}
+.callout-white {
+  border-left: 1px solid $white;
+  border-left-width: 5px !important;
+  & + .bs-callout {
+    margin-top: -5px;
+  }
+}
+@each $color, $value in $theme-colors {
+  .callout-#{$color} {
+    border-left: 1px solid $value;
+    border-left-width: 5px !important;
+    & + .bs-callout {
+      margin-top: -5px;
+    }
+  }
+}

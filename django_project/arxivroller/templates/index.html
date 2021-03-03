@@ -1,0 +1,1515 @@
+{% extends "base.html" %}
+
+{% block css %} 
+{{ block.super }}
+<style>
+    #sidebarMenu {
+        width: 300px;
+        height: 100%;
+        margin-left: -300px;
+        transition: all 0.3s;
+    }
+    #sidebarMenu.active {
+        margin-left: 0;
+    }
+    @media (min-width: 768.02px) {
+    #sidebarMenu {
+        width: 300px;
+        height: 100%;
+        margin-left: 0;
+        transition: all 0.3s;
+    }
+    #sidebarMenu.active {
+        margin-left: -300px;
+    }
+    }
+    
+    .paperCardBtn{
+        color: inherit;
+    }
+
+    .loadMoreToolTip{
+        background: #333;
+        color: white;
+        font-weight: bold;
+        padding: 4px 8px;
+        font-size: 13px;
+        border-radius: 4px;
+    }
+
+    .hideTarget{
+        display: none;
+    }
+    .hideControl:hover + .hideTarget {
+        display: block;
+        box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    }
+    .hideTarget:hover {
+        display: block;
+        box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    }
+</style>
+{% endblock %}
+
+{% block extend_menu_front %} 
+
+<button class="btn btn-outline-light me-1 pt-0" type="button" style="border:none;"  id="sidebarMenuToggle">
+    <!-- <span class="navbar-toggler-icon"></span> -->
+    <i class="bi bi-layout-sidebar fs-4"></i>
+</button>  
+
+{% endblock %}
+
+
+{% block extend_menu_mid %} 
+<div class="d-flex flex-column flex-md-row">
+<form class="d-flex" id="searchForm">
+    {% if request.GET.mainText %}
+    <input class="form-control me-2" type="text" value="{{request.GET.mainText}}" name="mainText" aria-label="Search">
+    {% else %}
+    <input class="form-control me-2" type="search" placeholder="Search" name="mainText" aria-label="Search">
+    {% endif %}
+    <button class="btn btn-outline-success" type="submit" id="searchSubmitBtn">Search</button>
+</form>
+</div>
+{% endblock %}
+
+{% block header_user %} 
+<button class="btn btn-outline-light pt-0 pb-1 px-1 d-none" type="button" style="border:none;" id="showPaperList">
+    <i class="bi bi-card-list fs-4"></i>
+</button>  
+<button class="btn btn-outline-light pt-0 pb-1 px-1 d-none" type="button" style="border:none;" id="showDetailViewer">
+    <i class="bi bi-card-heading fs-4"></i>
+</button>  
+
+{{ block.super }}
+{% endblock %}
+
+{% block content %}
+
+
+<nav id="sidebarMenu" class="bg-light border-end border-2">
+    
+    <div class="accordion  accordion-flush" id="accordionSidebarMenu">
+
+    <div class="accordion-item">
+        <h2 class="accordion-header">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#accordionSidebarMenuCollapseOne">
+            Subjects
+            </button>
+        </h2>
+        <div id="accordionSidebarMenuCollapseOne" class="accordion-collapse collapse show" data-bs-parent="#accordionSidebarMenu">
+            <div class="accordion-body">
+                
+                <ul class="nav flex justify-content-evenly nav-pills" id="subjectSelector">
+                </ul>
+                <div class="d-none" id="subjectEditForm">
+                  <form method="post" action="/api/user_preference/"  target="">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                      <label for="prefer_categories" class="form-label">Edit Subject List</label>
+                      <textarea name="prefer_categories" rows="3"></textarea>
+                      <div class="form-text">Saperate with comma. E.g. "cs.CL,cs.LG"</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                  </form>
+                </div>
+            </div>
+        </div>
+    </div>
+        
+    <div class="accordion-item">
+        <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accordionSidebarMenuCollapseTwo">
+            Filer 
+            </button>
+        </h2>
+        <div id="accordionSidebarMenuCollapseTwo" class="accordion-collapse collapse" data-bs-parent="#accordionSidebarMenu">
+            <div class="accordion-body ">
+                <div class="row">
+                    <div class="col-sm-4 d-flex align-items-center">
+                    Read
+                    </div>
+
+                    <div class="col-sm-8">
+                    <div class="btn-group d-flex" role="group">
+                        <input type="radio" class="btn-check" name="filterRead" id="filterAllRead" autocomplete="off" value="" checked>
+                        <label class="btn btn-outline-primary py-1" for="filterAllRead">All</label>
+                      
+                        <input type="radio" class="btn-check" name="filterRead" id="filterRead" autocomplete="off" value="true">
+                        <label class="btn btn-outline-primary py-1" for="filterRead"><i class="bi bi-envelope-open"></i></label>
+
+                        <input type="radio" class="btn-check" name="filterRead" id="filterUnRead" autocomplete="off" value="false">
+                        <label class="btn btn-outline-primary py-1" for="filterUnRead"><i class="bi bi-envelope"></i></label>
+                    </div>
+                    </div>
+                </div>
+                <div class="row pt-1 border-top mt-1">
+                    <div class="col-sm-4 d-flex align-items-center">
+                        Arch.
+                    </div>
+                    
+                    <div class="col-sm-8">
+                    <div class="btn-group d-flex" role="group">
+                        <input type="radio" class="btn-check" name="filterArchive" id="filterAllArchive" autocomplete="off" value="">
+                        <label class="btn btn-outline-primary py-1" for="filterAllArchive">All</label>
+                      
+                        <input type="radio" class="btn-check" name="filterArchive" id="filterUnArchive" autocomplete="off" value="false" checked>
+                        <label class="btn btn-outline-primary py-0" for="filterUnArchive"><i class="bi bi-archive"></i></label>
+                      
+                        <input type="radio" class="btn-check" name="filterArchive" id="filterArchive" autocomplete="off" value="true">
+                        <label class="btn btn-outline-primary py-0" for="filterArchive"><i class="bi bi-archive-fill"></i></label>
+                    </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+    <div class="accordion-item">
+        <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accordionSidebarMenuCollapseThree">
+            Collections
+            </button>
+        </h2>
+        <div id="accordionSidebarMenuCollapseThree" class="accordion-collapse collapse" data-bs-parent="#accordionSidebarMenu">
+            <div class="accordion-body ">
+                <div class="row">
+                    <div class="col-sm-4 d-flex align-items-center">
+                    Star
+                    </div>
+
+                    <div class="col-sm-8">
+                    <div class="btn-group d-flex" role="group">
+                        <input type="radio" class="btn-check" name="filterStar" id="filterAllStar" autocomplete="off" value="" checked>
+                        <label class="btn btn-outline-primary py-1" for="filterAllStar">All</label>
+                      
+                        <input type="radio" class="btn-check" name="filterStar" id="filterStar" autocomplete="off" value="true">
+                        <label class="btn btn-outline-primary py-0" for="filterStar"><i class="bi bi-star-fill"></i></label>
+
+                        <input type="radio" class="btn-check" name="filterStar" id="filterUnStar" autocomplete="off" value="false">
+                        <label class="btn btn-outline-primary py-0" for="filterUnStar"><i class="bi bi-star"></i></label>
+                    </div>
+                    </div>
+                </div>
+                <div class="pt-1 border-top mt-1">
+                    <div class="d-flex justify-content-center">
+                        Your Collections
+                    </div>
+                    
+                    
+                    <div class="row mt-1">
+                    <div class="col-sm-6 d-flex align-items-center">
+                        Mode.
+                    </div>
+                    
+                    <div class="col-sm-6">
+                    <div class="row btn-group d-flex mb-2" role="group" id="filterTagMode">
+                        <input type="radio" class="btn-check" name="filterTags" id="filterTagAndMode" autocomplete="off" value="tags" checked>
+                        <label class="col-6 btn btn-sm btn-outline-primary py-1" for="filterTagAndMode">&&</label>
+                        <input type="radio" class="btn-check" name="filterTags" id="filterTagAllMode" autocomplete="off" value="overlapTags">
+                        <label class="col-6 btn btn-sm btn-outline-primary py-1" for="filterTagAllMode">||</label>
+                    </div>
+                    </div>
+                    </div>
+
+                    <select id="tagsMultiSelect" class="js-example-basic-multiple" multiple="multiple"  style="width: 100%">
+                       
+                    </select>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+</nav>
+
+<div class="d-flex container-fluid flex-grow-1 overflow-auto">
+<div class="d-flex flex-grow-1 align-items-stretch row overflow-auto" id="mainContentView">
+
+
+<div class="col col-md-4 d-flex flex-column p-0 bg-light border-end border-2" style="height: 100%;" id="paperCardsCol">
+    <header>
+    <nav class="navbar px-2 py-1 navbar-expand-lg navbar-light bg-light border-bottom">
+        <div class="container-fluid px-1">
+        <a href="/" class="navbar-brand">Paper List</a>
+        <div>
+        <!-- <button type="button" class="btn btn-outline-primary pt-0" id="refreshBtn" title="Download Lastest Paper from arXiv.com"  style="border:none;" >
+            <i class="bi bi-cloud-download fs-4"></i>
+        </button> -->
+        <button type="button" class="btn-close" id="dismissPaperList"></button>
+        </div>
+        </div>
+    </nav>
+    </header>
+
+<div class="list-group list-group-flush flex-grow-1 overflow-auto my-scrollbar" id="paperCards">
+    
+</div>
+</div>
+
+<div class="col card border-0 rounded-0 bg-light overflow-auto my-scrollbar d-none d-md-flex" style="height: 100%;"  id="detailViewerCol">
+    <div class="hideControl fixed-action-btn-lt p-0 m-0" style="position: absolute; left:0; top:0;">
+        <a class="p-1 m-0 btn btn-primary shadow btn-lg" 
+        style="border-bottom-left-radius: 0;border-top-left-radius: 0;border-top-right-radius: 0;border-bottom-right-radius: 0.6rem;"
+        id="detailViewerHeaderControl">
+            <i class="fas fa-caret-left"></i>
+            
+        </a>
+    </div>
+    <header id="detailViewerHeader">
+    <nav class="navbar ps-3 pe-0 pt-1 pb-0 mb-1 navbar-light bg-light border-bottom container-fluid">
+        <div>
+        <div class="d-inline dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle disabled" id="detailViewerMenuBtn" type="button" data-bs-toggle="dropdown">
+                Viewer Options
+            </button>
+            <ul class="dropdown-menu" role="group" id="detailViewerMenu">
+              <li><label class="dropdown-item" type="button" name="summary">Summary</label></li>
+              <li><label class="dropdown-item" type="button" name="full-html">Full HTML</label></li>
+              <li><label class="dropdown-item" type="button" name="full-pdf">Full PDF</label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="d-inline d-none btn btn-outline-success"  id="syncPDFAnnotationBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-cloud-arrow-up" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M7.646 5.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 6.707V10.5a.5.5 0 0 1-1 0V6.707L6.354 7.854a.5.5 0 1 1-.708-.708l2-2z"/>
+            <path d="M4.406 3.342A5.53 5.53 0 0 1 8 2c2.69 0 4.923 2 5.166 4.579C14.758 6.804 16 8.137 16 9.773 16 11.569 14.502 13 12.687 13H3.781C1.708 13 0 11.366 0 9.318c0-1.763 1.266-3.223 2.942-3.593.143-.863.698-1.723 1.464-2.383zm.653.757c-.757.653-1.153 1.44-1.153 2.056v.448l-.445.049C2.064 6.805 1 7.952 1 9.318 1 10.785 2.23 12 3.781 12h8.906C13.98 12 15 10.988 15 9.773c0-1.216-1.02-2.228-2.313-2.228h-.5v-.5C12.188 4.825 10.328 3 8 3a4.53 4.53 0 0 0-2.941 1.1z"/>
+          </svg> PDF</button>
+        </div>
+
+        <button type="button" class="btn-close" id="dismissDetailViewer"></button>
+    </nav>
+    </header>
+
+
+    <div id="detailViewer" style="height: 100%;">
+    <h5 class="card-header rounded-0 mb-1 bg-transparent border-no">
+        Open a Paper
+    </h5>
+
+    <div class="card-body m-0 p-1">
+    
+    
+    <h6 class="card-title"></h6>
+
+    <h6 class="card-subtitle mb-2 text-muted"> </h6>
+
+    <p class="card-text">
+    </p>
+
+    </div>
+    </div>
+
+</div>
+
+</div>
+</div>
+
+{% endblock %}
+
+{% block js %} 
+{{ block.super }}
+
+<!-- Load data -->
+{{ request.GET |json_script:"requestGET" }}
+
+<script type="text/javascript" src="https://documentcloud.adobe.com/view-sdk/main.js"></script>
+<script type="text/javascript">
+$('#sidebarMenuToggle').on('click', function () {
+    $('#sidebarMenu').toggleClass('active');
+});
+$('#detailViewerHeaderControl').click(function (){
+    $("#detailViewerHeader").toggleClass("hideTarget")
+    $(this).children("i").toggleClass("fa-caret-right")
+    $(this).children("i").toggleClass("fa-caret-left")
+})
+// $('#detailViewerHeaderControl').hover(function (){
+//     // $("#detailViewerHeader").toggleClass("hideTarget")
+//     if($(this).children("i").hasClass("fa-caret-right")){
+//         $(this).children("i").toggleClass("fa-caret-right")
+//         $(this).children("i").toggleClass("fa-caret-left")
+//     }
+// })
+</script>
+<script type="text/javascript">
+    // 	        state1	            state2          	state3
+    // 	        md 1&2	            md 1	            md 2
+    // 	        <md 1	            <md 1	            md 2
+    // col1 	col col-md-4	    col 	            col d-none
+    // show1	d-none	            d-none	            d-none  d-md-block
+    // col2	    d-none d-md-block	d-none	
+    // show2	d-none	            d-none d-md-block	d-none 
+                
+    // x1	    state3	            state3	            N/A
+    // s1	    N/A	                N/A	                state1
+    // x2	    state2	            N/A	                state2
+    // s2	    N/A	                state1	            N/A
+    var stageListView = 1;
+    function turnListViewFirst(){
+        // on >=md break point, show list and viewer
+        // on <md break point, show list
+        $('#paperCardsCol').removeClass('d-none');
+        $('#paperCardsCol').addClass('col-md-4');
+        $('#showPaperList').removeClass('d-md-block');
+        $('#detailViewerCol').addClass('d-md-flex');
+        $('#detailViewerCol').addClass('d-none');
+        $('#showDetailViewer').removeClass('d-md-block');
+        stageListView = 1;
+    }
+    function turnListViewSecond(){
+        // on >=md break point, show list
+        // on <md break point, show list
+        $('#paperCardsCol').removeClass('d-none');
+        $('#paperCardsCol').removeClass('col-md-4');
+        $('#showPaperList').removeClass('d-md-block');
+        $('#detailViewerCol').removeClass('d-md-flex');
+        $('#detailViewerCol').addClass('d-none');
+        $('#showDetailViewer').addClass('d-md-block');
+        stageListView = 2;
+    }
+    function turnListViewThird(){
+        // on >=md break point, show viewer
+        // on <md break point, show viewer
+        $('#paperCardsCol').addClass('d-none');
+        $('#paperCardsCol').removeClass('col-md-4');
+        $('#showPaperList').addClass('d-md-block');
+        $('#detailViewerCol').removeClass('d-md-flex');
+        $('#detailViewerCol').removeClass('d-none');
+        $('#showDetailViewer').removeClass('d-md-block');
+        stageListView = 3;
+    }
+
+    $('#dismissPaperList').on('click', turnListViewThird);
+    $('#showPaperList').on('click', turnListViewFirst);
+    $('#dismissDetailViewer').on('click', turnListViewSecond);
+    $('#showDetailViewer').on('click', turnListViewFirst);
+</script>
+<script type="text/javascript">
+// ==========================================
+// JQuery Setup to prevent overflow bug
+// ==========================================
+jQuery.Animation.prefilter(function(element, properties, options) {
+  if (options.overrideOverflow) {
+    jQuery(element).css("overflow", options.overrideOverflow);
+  }
+});
+
+// ==========================================
+// Create/Load Elements
+// ==========================================
+const requestGET = JSON.parse(document.getElementById('requestGET').textContent);
+// console.log("Logging requestGET", requestGET);
+var additionalCSS = new Set();
+var csrfToken = document.createElement("div");
+csrfToken.innerHTML = '{% csrf_token %}';
+csrfToken = csrfToken.firstChild;
+csrfToken = csrfToken.value;
+var majorQuery = {
+
+};
+var paperCards = $('#paperCards');
+var loadMore = $($.parseHTML(`<div class="list-group-item list-group-item-action p-0 card rounded-0">
+    <div class="card-header rounded-0 border-0">
+        <div class="text-center"> 
+            <h5 class="mb-1">Load More</h5>
+        </div>
+    </div>
+</div>`));
+var detailViewer = $("#detailViewer");
+var detailViewerMain = new Set();
+var detailViewerMenu = $("#detailViewerMenu");
+var detailViewerMenuBtn = $("#detailViewerMenuBtn")
+const syncPDFAnnotationBtnEL = document.getElementById("syncPDFAnnotationBtn")
+let syncPDFFunction = function(event){
+    alert("Error, no PDF open");
+};
+function syncPDFListenerFunction() {
+    syncPDFFunction(); //external function call
+}
+var blockAutoPDFSync = false
+syncPDFAnnotationBtnEL.addEventListener('click', syncPDFListenerFunction);
+var activePaper = null;
+var activePaperData = null; // Prevent Lost of DOM
+var subjectSelector = $("#subjectSelector");
+var subjectAll = $.parseHTML(`<li class="nav-item">
+            <a class="nav-link fw-light fs-8  p-1 my-1" href="#">
+            all
+            </a>
+        </li>`);
+var editSubjectBtn = $($.parseHTML(`<li class="nav-item">
+            <a class="nav-link fw-light fs-8 p-1 my-1 pt-0" href="#">
+            <i class="bi bi-plus-square-dotted fs-5"></i>
+            </a>
+        </li>`));
+var activeSubject = new Set();
+var userPreference = null;
+var editSubjectPopForm = $("#subjectEditForm");
+// Get Filter
+var filterRead = $("#filterRead").closest('.btn-group');
+var filterArchive = $("#filterArchive").closest('.btn-group');
+var filterStar = $("#filterStar").closest('.btn-group');
+var filterTagMode = $("#filterTagMode")
+var searchForm = $("#searchForm");
+var searchSubmitBtn = $("#searchSubmitBtn");
+
+
+// ==========================================
+// User Paper
+// ==========================================
+// REST user_paper
+function loadUserPaper(paper_id, done_funcs=null){
+$.ajax({
+    url: window.location.origin + 
+    `/api/user_paper/?paper_id=${paper_id}&format=json`,
+    type: 'GET',
+    cache: false,
+    timeout: 30000,
+    success: function(data) {
+        // console.log(data);
+        if (done_funcs != null) {
+            for (i in done_funcs)
+                done_funcs[i]();
+        }
+    },
+    dataType: "json",
+});
+}
+function postUserPaper(paper_id, update_dict, done_funcs=null){
+    update_dict.csrfmiddlewaretoken = csrfToken
+    $.ajax({
+        url: window.location.origin + 
+        `/api/user_paper/?paper_id=${paper_id}`,
+        type: 'POST',
+        cache: false,
+        timeout: 30000,
+        data: update_dict,
+        success: function(data) {
+            // console.log(data);
+            if (done_funcs != null) {
+                for (i in done_funcs)
+                    done_funcs[i]();
+            }
+        },
+        dataType: "json",
+    });
+}
+
+// ==========================================
+// User Preference
+// ==========================================
+// REST user_preference
+function loadUserPreference(done_funcs=null){
+$.ajax({
+    url: window.location.origin + 
+    "/api/user_preference/?format=json",
+    type: 'GET',
+    cache: false,
+    timeout: 30000,
+    success: function(data) {
+        // console.log(data);
+        userPreference = data;
+        // console.log(userPreference);
+        if (done_funcs != null) {
+            for (i in done_funcs)
+                done_funcs[i]()
+        }
+    },
+    dataType: "json",
+});
+}
+function postUserPreference(update_dict, done_funcs=null){
+update_dict.csrfmiddlewaretoken = csrfToken
+$.ajax({
+    url: window.location.origin + 
+    `/api/user_preference/`,
+    type: 'POST',
+    cache: false,
+    timeout: 30000,
+    data: update_dict,
+    success: function(data) {
+        // console.log(data);
+        if (done_funcs != null) {
+            for (i in done_funcs)
+                done_funcs[i]();
+        }
+    },
+    dataType: "json",
+});
+}
+
+// ==========================================
+// Paper Cards
+// ==========================================
+// Helper Function to Toggle Reading Status
+function readPaperStatus(paper, post=true) {
+    var paper_details = paper.data("paper-details");
+    paper_details.user_paper.read_status = true
+    paper.removeClass("callout-primary")
+    paper.addClass("callout-white")
+    var readBtn = paper.find('.paperCardBtn').filter("[name='read']").find('i')
+    readBtn.removeClass("bi-envelope")
+    readBtn.addClass("bi-envelope-open")
+    if(post)
+        postUserPaper(paper_details.id, {read_status: true})
+}
+function unreadPaperStatus(paper, post=true) {
+    var paper_details = paper.data("paper-details");
+    paper_details.user_paper.read_status = false
+    paper.removeClass("callout-white")
+    paper.addClass("callout-primary")
+    var readBtn = paper.find('.paperCardBtn').filter("[name='read']").find('i')
+    readBtn.removeClass("bi-envelope-open")
+    readBtn.addClass("bi-envelope")
+    if(post)
+        postUserPaper(paper_details.id, {read_status: false})
+}
+function togglePaperReadingStatus(paper, post=true){
+    var paper_details = paper.data("paper-details");
+    if (paper_details.user_paper.read_status)
+        unreadPaperStatus(paper, post)
+    else
+        readPaperStatus(paper, post)
+}
+// Helper Function to Toggle Archive Status
+function createUndoToastArchive(paper, text="Archived"){
+    var undoToast = $.parseHTML(`<div class="position-fixed bottom-0 start-50 translate-middle-x p-3" style="z-index: 5">
+    <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+        <div class="toast-body">
+        ${text} a Paper. 
+        </div>
+        <button type="button" name='undoBtn' class="btn btn-outline-secondary btn-sm me-2 m-auto" data-bs-dismiss="toast">Undo</button> 
+        <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+    </div>`)[0];
+    document.body.appendChild(undoToast);
+    var undoToastEL = $(undoToast).children('.toast')[0];
+    $(undoToast).on('click', '[name="undoBtn"]', function (event){
+        togglePaperArchiveStatus(paper, post=true, undo=false)
+    });
+    undoToastEL = new bootstrap.Toast(undoToastEL);
+    undoToastEL.show();
+}
+function archivePaperStatus(paper, post=true, undo=false) {
+    var paper_details = paper.data("paper-details");
+    paper_details.user_paper.archive_status = true;
+    var archiveBtn = paper.find('.paperCardBtn').filter("[name='archive']").find('i');
+    archiveBtn.removeClass("bi-archive");
+    archiveBtn.addClass("bi-archive-fill");
+    if(filterArchive.children("input:checked").val() == "false"){
+        paper.children().hide(500, function(){
+            paper.addClass("d-none")
+        }).show(0)
+        if (undo)
+            createUndoToastArchive(paper, text="Archived")
+    }
+    else 
+        paper.removeClass("d-none")
+    if(post)
+        postUserPaper(paper_details.id, {archive_status: true});
+}
+function unarchivePaperStatus(paper, post=true, undo=false) {
+    var paper_details = paper.data("paper-details");
+    paper_details.user_paper.archive_status = false;
+    var archiveBtn = paper.find('.paperCardBtn').filter("[name='archive']").find('i');
+    archiveBtn.removeClass("bi-archive-fill");
+    archiveBtn.addClass("bi-archive");
+    if(filterArchive.children("input:checked").val() == "true"){
+        paper.children().hide(500, function(){
+            paper.addClass("d-none")
+        }).show(0)
+        if (undo)
+            createUndoToastArchive(paper, text="Recovered")
+    }
+    else 
+        paper.removeClass("d-none")
+    if(post)
+        postUserPaper(paper_details.id, {archive_status: false});
+}
+function togglePaperArchiveStatus(paper, post=true, undo=false){
+    var paper_details = paper.data("paper-details");
+    if (paper_details.user_paper.archive_status)
+        unarchivePaperStatus(paper, post, undo)
+    else
+        archivePaperStatus(paper, post, undo)
+}
+// Helper Function to Toggle Archive Status
+function starPaperStatus(paper, post=true) {
+    var paper_details = paper.data("paper-details");
+    paper_details.user_paper.star_status = true;
+    var starBtn = paper.find('.paperCardBtn').filter("[name='star']").find('i');
+    starBtn.removeClass("bi-star");
+    starBtn.addClass("bi-star-fill");
+    if(post)
+        postUserPaper(paper_details.id, {star_status: true});
+}
+function unstarPaperStatus(paper, post=true) {
+    var paper_details = paper.data("paper-details");
+    paper_details.user_paper.star_status = false;
+    var starBtn = paper.find('.paperCardBtn').filter("[name='star']").find('i');
+    starBtn.removeClass("bi-star-fill");
+    starBtn.addClass("bi-star");
+    if(post)
+        postUserPaper(paper_details.id, {star_status: false});
+}
+function togglePaperStarStatus(paper, post=true){
+    var paper_details = paper.data("paper-details");
+    if (paper_details.user_paper.star_status)
+        unstarPaperStatus(paper, post)
+    else
+        starPaperStatus(paper, post)
+}
+
+function hideTagsForm(paper){
+    var tagBtn = paper.find('.paperCardBtn').filter("[name='tags']").find('i');
+    var tagBthEl = tagBtn[0];
+    var popover = bootstrap.Popover.getInstance(tagBthEl);
+    popover.hide();
+}
+function setPaperTagsFormSubmit(form, paperid){
+    try {
+        var tagsForm = $(form).serializeArray();
+        var tags=[];
+        for(var i in tagsForm)
+        {
+            tag = tagsForm[i];
+            if(tag["name"]=="newTags"){
+                if(tag["value"]!="")
+                    tags.push(...tag["value"].split(","));
+            }
+            else
+                tags.push(tag["name"]);
+        }
+        tags.map(s => s.trim());
+        var paper=$(document.getElementById(paperid));
+        var paper_details = paper.data("paper-details");
+        paper_details.user_paper.tags = tags;
+        setPaperTags(paper);
+        hideTagsForm(paper);
+        return false;
+    } catch (error) {
+        alert("Error! " + error.msg)
+        console.log(error);
+        return false;
+    }
+}
+function setPaperTags(paper, post=true){
+    var paper_details = paper.data("paper-details");
+    var tagBtn = paper.find('.paperCardBtn').filter("[name='tags']").find('i');
+    var tagBthEl = tagBtn[0];
+    var popover = bootstrap.Popover.getInstance(tagBthEl);
+    
+    var tagCheckBoxHtml = "";
+    for(cat_id in paper_details.user_paper.tags){
+        tagCheckBoxHtml += `<input type="checkbox" class="form-check-input" checked name='${paper_details.user_paper.tags[cat_id]}'>
+        <label class="form-check-label">${paper_details.user_paper.tags[cat_id]}</label> 
+        `;
+    }
+
+    var popoverHtml = `
+            <form onsubmit="setPaperTagsFormSubmit(this,'${paper[0].id}');return false;">
+                <label class="form-label">New Tags:</label>
+                <input type="text" name="newTags" class="form-control">
+                <div class="form-text">Saperate with comma.</div>
+
+                ${tagCheckBoxHtml}
+                <br>
+                <button type="submit" name="saveTags" class="btn btn-sm btn-primary mt-2">Save</button>
+                <button type="reset" name="close" class="btn btn-sm btn-Secondary mt-2" onclick="hideTagsForm($(document.getElementById('${paper[0].id}')))">Close</button>
+            </form>
+            `
+    // console.log($(tagBthEl).parents("div"))
+    if (popover === null){
+        tagBthEl.setAttribute("data-bs-content", popoverHtml);
+        popover = new bootstrap.Popover(tagBthEl, {
+            container: "body",
+            html: true,
+            sanitize: false
+        });
+    }
+    else{
+        tagBthEl.setAttribute("data-bs-content", popoverHtml);
+    }
+    // popover.toggle()
+    
+    var tagRow = paper.find("[name='tagRow']");
+    var tag_badges = "";
+    for(cat_id in paper_details.user_paper.tags){
+        tag_badges += `<span class="badge bg-primary fw-light">${paper_details.user_paper.tags[cat_id]}</span> `;
+    }
+    tagRow.html(tag_badges);
+    if(post)
+    {
+        postUserPaper(paper_details.id, {"tags": JSON.stringify(paper_details.user_paper.tags)});
+    }
+}
+
+// 1. show content by clicking paper cards
+// 2. Toggle the reading status
+paperCards.on('click', '.list-group-item', function(event) {
+        // console.log(event.currentTarget)
+        // console.log(window.location)
+        var targetPaper = this;
+        if(this == loadMore[0]){
+            loadPaperCards(empty=false);
+            return;
+        }
+
+        if(activePaper!=targetPaper) {
+            // Change Paper Reading Status
+            readPaperStatus($(targetPaper))
+
+            // If there's no active class
+            if (activePaper != null) {
+                $(activePaper).removeClass("active");
+            }
+            activePaper = targetPaper;
+            activePaperData = $(targetPaper).data("paper-details");
+            
+            $(targetPaper).addClass("active");
+            
+            // set detailViewerMenuBtn
+            detailViewerMenuBtn.removeClass("disabled");
+            detailViewerMenuBtn.html("Summary")
+
+            // Update Main Viewer
+            $("#syncPDFAnnotationBtn").addClass("d-none")
+            var paper_details = activePaperData;
+            detailViewer.empty()
+            detailViewerMain.clear()
+            detailViewerMain = new Set();
+            var authorHtml = [];
+            for (i in paper_details.authors){
+                authorHtml.push()
+            }
+            detailViewerMain['summary'] = $($.parseHTML(`<div><div class="card-header rounded-0 mb-1 bg-transparent border-no">
+                <h5>${paper_details.title}</h5> 
+                <a type="button" class="btn btn-outline-danger btn-xs" onclick="window.open('${paper_details.arxiv_url}');">arXiv</a>
+                <a type="button" class="btn btn-outline-primary btn-xs" onclick="window.open('${paper_details.pdf_url}');">PDF</a>
+                <a type="button" class="btn btn-outline-danger btn-xs" onclick="window.open('https://www.mendeley.com/import/?url=${paper_details.arxiv_url}');">Mendeley</a>
+                <a type="button" class="btn btn-outline-warning btn-xs" onclick="window.open('https://api.semanticscholar.org/URL:${paper_details.arxiv_url}');">Semantic Scholar</a>
+                <a type="button" class="btn btn-outline-info btn-xs" onclick="window.open('https://academic.microsoft.com/search?q=${paper_details.title}');">Micrsoft Academic</a>
+                <a type="button" class="btn btn-outline-primary btn-xs" onclick="window.open('https://scholar.google.com/scholar?q=${paper_details.title}');"><i class="fab fa-google"></i> Scholar</a>
+                </div>
+
+                <div class="card-body m-0 p-1">
+                
+                
+                <h6 class="card-title"> ${paper_details.authors.map(x => `<a href="${window.location.origin + "/?author=" +x}"> ${x}</a>`).join(", ")} </h6>
+
+                <h6 class="card-subtitle mb-2 text-muted"> 
+                    ${(paper_details.comment ? paper_details.comment  + " " : "" )} 
+                    <span class="fw-lighter">${paper_details.updated}</span>
+                </h6>
+
+                <p class="card-text">
+                    ${paper_details.summary}
+                </p>
+
+                <ul class="nav nav-tabs" id="summaryTabList" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="citationTab" data-bs-toggle="tab" data-bs-target="#citationContent" type="button" role="tab">Citation</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="referenceTab" data-bs-toggle="tab" data-bs-target="#referenceContent" type="button" role="tab">Reference</button>
+                </li>
+                </ul>
+                <div class="tab-content" id="summaryTabContent">
+                <div class="tab-pane fade show active" id="citationContent" role="tabpanel">
+                No Data
+                </div>
+                <div class="tab-pane fade" id="referenceContent" role="tabpanel">
+                No Data
+                </div>
+                </div>
+                
+                </div></div>
+                `));
+            detailViewerMain['summary'].appendTo(detailViewer);
+                
+            // Hook tagSelectedText Helpful Function
+            detailViewerMain['summary'].children('div.card-header').children('h5').mouseup(tagSelectedText);
+            detailViewerMain['summary'].children('div.card-body').children('p.card-text').mouseup(tagSelectedText);
+
+            
+            // Load data from semantic Scholar
+            var s2id = `arXiv:${activePaperData.arxiv_id}`
+            if(activePaperData.arxiv_id.includes('s2:'))
+                s2id = activePaperData.arxiv_id.replace("s2:", "")
+            $.ajax({
+                url: `https://api.semanticscholar.org/v1/paper/${s2id}?include_unknown_references=true`,
+                type: 'GET',
+                cache: false,
+                timeout: 30000,
+                success: function(data) {
+                    // console.log(detailViewerMain['summary'].filter('div.card-header'));
+                    detailViewerMain['summary'].children('div.card-header').append(
+                        ` <a type="button" class="btn btn-outline-success btn-xs" onclick="window.open('https://www.connectedpapers.com/main/${data.paperId}');">Connected Papers</a> `
+                    )
+                    $("#citationTab").html(`Citation (${data.citations.length})`)
+                    $("#referenceTab").html(`Reference (${data.references.length})`)
+                    // alert('OK');
+                    function createlist(data, content){
+                        if (data.length == 0){
+                            content.html("No Data.")
+                            return;
+                        }
+                        content.empty()
+                        for(var i=0; i<data.length; i++){
+                            var entry = data[i];
+                            var badgeHtml = "";
+                            var redirectHtml = "";
+                            if (entry.arxivId != null){
+                                badgeHtml += `<a type="button" class="btn btn-outline-danger btn-xs" onclick="window.open('https://arxiv.org/abs/${entry.arxivId}');">arXiv</a> `
+                                badgeHtml += `<a type="button" class="btn btn-outline-primary btn-xs" onclick="window.open('https://arxiv.org/pdf/${entry.arxivId}.pdf');">PDF</a> `
+                                badgeHtml += `<a type="button" class="btn btn-outline-warning btn-xs" onclick="window.open('${entry.url}');">Semantic Scholar</a> `
+                                badgeHtml += `<a type="button" class="btn btn-outline-success btn-xs" onclick="window.open('https://www.connectedpapers.com/main/${entry.paperId}');">Connected Papers</a> `
+                                redirectHtml = `<a type="button" class="btn btn-outline-primary px-1 py-0 me-1 mt-0 border-0" href="${window.location.origin + "/?arxiv_id=" +entry.arxivId}"><i class="fas fa-external-link-alt"></i></a>`
+                            }
+                            else if (entry.paperId != ""){
+                                badgeHtml += `<a type="button" class="btn btn-outline-warning btn-xs" onclick="window.open('${entry.url}');">Semantic Scholar</a> `
+                                badgeHtml += `<a type="button" class="btn btn-outline-success btn-xs" onclick="window.open('https://www.connectedpapers.com/main/${entry.paperId}');">Connected Papers</a> `
+                                redirectHtml = `<a type="button" class="btn btn-outline-primary px-1 py-0 me-1 mt-0 border-0" href="${window.location.origin + "/?mainText=" +encodeURIComponent(entry.title)}"><i class="fas fa-search"></i></a>`
+                                redirectHtml += `<a type="button" class="btn btn-outline-primary px-1 py-0 me-1 mt-0 border-0" href="${window.location.origin + "/?s2_id=" +encodeURIComponent(entry.paperId)}"><i class="fas fa-download"></i></a>`
+                            }
+                            else {
+                                redirectHtml = `<a type="button" class="btn btn-outline-primary px-1 py-0 me-1 mt-0 border-0" href="${window.location.origin + "/?mainText=" +encodeURIComponent(entry.title)}"><i class="fas fa-search"></i></a>`
+                            }
+                            badgeHtml += `<a type="button" class="btn btn-outline-info btn-xs" onclick="window.open('https://academic.microsoft.com/search?q=${entry.title}');">Micrsoft Academic</a>
+                                            <a type="button" class="btn btn-outline-primary btn-xs" onclick="window.open('https://scholar.google.com/scholar?q=${entry.title}');"><i class="fab fa-google"></i> Scholar</a>`
+                            // console.log(entry.title,entry.arxivId,entry.arxivId != null)    
+                            badgeHtml = `<h6 class="card-subtitle mb-2"> ${badgeHtml} </h6>`
+                            var entryHtml = $($.parseHTML(`<div class="card"><div class="card-body">
+                                <h5 class="card-title">${redirectHtml}${entry.title}</h5> 
+                                <h6 class="card-subtitle mb-2 text-muted"> 
+                                    ${entry.authors.map(x => `<a href="${window.location.origin + "/?author=" +x.name}"> ${x.name}</a>`).join(", ")} 
+                                    <span class="fw-lighter">${entry.year}</span>
+                                </h6>
+                                ${badgeHtml}
+                                
+                            </div></div>`));
+                            entryHtml.appendTo(content);
+                        }
+                    }
+                    createlist(data.citations, $("#citationContent"))
+                    createlist(data.references, $("#referenceContent"))
+                },
+                error: function(error) {
+                    console.log(error);
+                    console.log(`Loading from https://api.semanticscholar.org/v1/paper/arXiv:${activePaperData.arxiv_id}?include_unknown_references=true. Failed. Error: ${error.responseText}`);
+                },
+                dataType: "json",
+            });
+        }
+
+
+        // lg breakpoint
+        if (!window.matchMedia("(min-width: 768px)").matches){
+            turnListViewThird();
+        }
+});
+
+// Hook Functions on paperCardBtn 
+paperCards.on('click', '.paperCardBtn', function(event) {
+    event.stopPropagation();
+    event.preventDefault();
+    var paper = $(this).parents('.paperCard');
+    if (this.name=='read')
+        togglePaperReadingStatus(paper)
+    else if (this.name=='archive')
+        togglePaperArchiveStatus(paper, post=true, undo=true)
+    else if (this.name=='star')
+        togglePaperStarStatus(paper)
+    else if (this.name=='tags')
+        setPaperTags(paper, post=false)
+});
+
+// Refresh paper cards
+function loadPaperCards(empty = true){
+    var subjectStr = ""; 
+    if ($(subjectAll).children('a').hasClass("active"))
+        subjectStr = "all";
+    else
+        subjectStr = Array.from(activeSubject).join(' ');
+    var filterStr = '';
+    if(filterRead.children("input:checked").val())
+        filterStr += "&&read_status=" + filterRead.children("input:checked").val();
+    if(filterArchive.children("input:checked").val())
+        filterStr += "&&archive_status=" + filterArchive.children("input:checked").val();
+    if(filterStar.children("input:checked").val())
+        filterStr += "&&star_status=" + filterStar.children("input:checked").val();
+
+
+    var selectedTags = $('#tagsMultiSelect').find(':selected');
+    var selectedTagsStr = ""
+    if (selectedTags.length > 0){
+        var tags = []
+        for (var i = 0; i < selectedTags.length; i++)
+            tags.push(selectedTags[i].text)
+        console.log(selectedTags)
+        selectedTagsStr += "&&"+ filterTagMode.children("input:checked").val()+ "="+tags.join(',')
+    }
+
+    // Parsing requestGET
+    var requestGETStr = '';
+    if(!$.isEmptyObject(requestGET)){
+        var requestGETStr = '';
+        for(const [ k, v ] of Object.entries(requestGET)){
+            if (k=="mainText"){
+                requestGETStr += `&&bothtext=${v}`;
+                continue;
+            }
+            requestGETStr += `&&${k}=${v}`;
+        }
+    }
+
+    loadMore.find("h5").html(`<div class="spinner-border text-primary" role="status">
+</div>`)
+
+    if(empty)
+        var startId = 0;
+    else
+        var startId = paperCards.children().length-1;
+
+    $.get(
+        window.location.origin + 
+        "/api/papers/?"+
+        "overlapCats=" + subjectStr + 
+        filterStr +
+        requestGETStr +
+        selectedTagsStr +
+        "&&orderBy=latest" + 
+        "&&start_id=" + startId + 
+        "&&format=json",
+        {},
+        function(data) {
+            loadMore.detach()
+            if(empty){
+                paperCards.empty();
+                detailViewer
+            }
+            // console.log(startId, empty)
+            // console.log(data)
+            for(i in data){
+                var paper_details = data[i];
+                paper_details.parsed_updated = new Date(paper_details.updated)
+                paper_details.parsed_updated = paper_details.parsed_updated.getUTCFullYear()
+                                     + "/" + (paper_details.parsed_updated.getUTCMonth() + 1) 
+                                     + "/" + paper_details.parsed_updated.getUTCDate();
+                // Setup Catrgory bedges
+                var category_badges = ""
+                for(cat_id in paper_details.categories){
+                    category_badges += `<span class="badge bg-secondary fw-light">${paper_details.categories[cat_id]}</span> `
+                }
+                // Set Up Paper Cards
+                var paper = $.parseHTML(`<div id="paperCard-${paper_details.arxiv_id}" class="paperCard list-group-item list-group-item-action p-0 mt-1 card rounded-0 border-bottom-0 callout-primary" >
+                            <div class="card-header rounded-0 border-0  bg-transparent  mx-1 pe-1 ps-0 pt-2 pb-0">
+                                <div class="text-truncate" >  
+                                    <h5 class="mb-1">${ paper_details.title }</h5> 
+                                </div>
+                    
+                                <div class="d-flex flex-row justify-content-between align-items-end" style="margin-top: -6px;">
+                                <small class="fw-light">${paper_details.parsed_updated}</small>
+                                <div class="p-0 m-0">
+                                <a class="paperCardBtn fw-light" name="read" href="#"><i class="bi bi-envelope fs-5 p-0 m-0"></i></a>
+                                <a class="paperCardBtn fw-light" name="archive" href="#"><i class="bi bi-archive fs-5 p-0 m-0"></i></a>
+                                <a class="paperCardBtn fw-light" name="star" href="#"><i class="bi bi-star fs-5 p-0 m-0"></i></a>
+                                
+                                </div>
+                                </div>
+
+                            </div>
+                            <div class="card-body bg-transparent mx-1 pe-1 ps-0 pb-1 pt-1">
+                                <div class="m-0 line-clamp-3">${paper_details.summary}</div>
+                                ${category_badges}
+                                <span name="tagRow">
+                                    
+                                </span>
+                                <a class="paperCardBtn fw-light" name="tags" href="#">
+                                    <i class="bi bi-bookmark-plus fs-5 p-0 m-0"  title="Edit Tags" data-bs-toggle="popover"></i>
+                                </a>
+                            </div>
+                    </div>`);
+                // Attach paper details for easy use latter
+                $(paper).data("paper-details", paper_details);
+                $(paper).appendTo(paperCards);
+
+                // Set Read Status (After attaching data)
+                if (paper_details.user_paper.read_status)
+                    readPaperStatus($(paper), post=false)
+                if (paper_details.user_paper.archive_status)
+                    archivePaperStatus($(paper), post=false)
+                if (paper_details.user_paper.star_status)
+                    starPaperStatus($(paper), post=false)
+                setPaperTags($(paper), post=false)
+                
+                // console.log(i, paper_details.title)
+            }
+            loadMore.appendTo(paperCards);
+            if(data.length>0)
+                loadMore.find("h5").html("Load More");
+            else
+                loadMore.find("h5").html("No More");
+        }
+    );
+}
+
+
+// ==========================================
+// Detail Viewer Menu Design
+// ==========================================
+function resizeIframe(obj) {
+        obj.style.height = obj.contentWindow.document.documentElement.scrollHeight + 'px';
+}
+detailViewerMenu.on('click', '.dropdown-item', function(event) {
+    $("#syncPDFAnnotationBtn").addClass("d-none")
+    detailViewerMenuBtn.html(this.innerHTML);
+    for(k in detailViewerMain){
+        detailViewerMain[k].addClass('d-none');
+        // Detach will delete PDF data
+    }
+    var name = $(this).attr('name');
+    // console.log("attaching "+name, detailViewerMain)
+
+    if(name in detailViewerMain){
+        // name!="full-pdf" prevent bugs
+        // console.log("attaching "+name)
+        detailViewerMain[name].removeClass('d-none');
+        return;
+    }
+    var paper_details = activePaperData;
+    // console.log(activePaperData)
+    if (name=="full-pdf"){
+        $("#syncPDFAnnotationBtn").removeClass("d-none")
+        // Iframe-method
+        // detailViewerMain[name] = $($.parseHTML(`
+        // <iframe src="${paper_details.pdf_url}" style="width: 100%;height: 5000px;"/>
+        // `));
+        // detailViewerMain[name].attr('style', 'width: 100%; height: 100%;');
+        // detailViewerMain[name].appendTo(detailViewer);
+
+        var pdf_url = (paper_details.pdf_url.includes(".pdf")) ? paper_details.pdf_url : paper_details.pdf_url+'.pdf';
+        console.log(pdf_url)
+        detailViewerMain[name] = $($.parseHTML(`
+        <div id="adobe-dc-view-${paper_details.arxiv_id}"></div>
+        `));
+        detailViewerMain[name].attr('style', 'width: 100%; height: 100%;');
+        detailViewerMain[name].appendTo(detailViewer);
+        /* Control the default view mode */
+        const viewerConfig = {
+            /* Allowed possible values are "FIT_PAGE", "FIT_WIDTH" or "" */
+            defaultViewMode: "FIT_PAGE",
+            // embedMode: "LIGHT_BOX",
+            showAnnotationTools: true,
+            enableAnnotationAPIs: true,
+            includePDFAnnotations: true
+        };
+
+        if (location.protocol === 'https:'){
+            pdf_url = pdf_url.replace("http:","https:")
+            clientId = "628cbfe848f84fa782439686f0fbe93c"
+        }
+        else{
+            pdf_url = pdf_url.replace("http:","https:")
+            clientId = "511065aadce44ac2aa8cb29015ba3339"
+        }
+
+        /* Initialize the AdobeDC View object */
+        var adobeDCView = new AdobeDC.View({
+                /* Pass your registered client id */
+                clientId: clientId,
+                /* Pass the div id in which PDF should be rendered */
+                divId: `adobe-dc-view-${paper_details.arxiv_id}`,
+            });
+
+            /* Invoke the file preview API on Adobe DC View object */
+            var previewFilePromise = adobeDCView.previewFile({
+                /* Pass information on how to access the file */
+                content: {
+                    /* Location of file where it is hosted */
+                    location: {
+                        url: pdf_url,
+                        /*
+                        If the file URL requires some additional headers, then it can be passed as follows:-
+                        headers: [
+                            {
+                                key: "<HEADER_KEY>",
+                                value: "<HEADER_VALUE>",
+                            }
+                        ]
+                        */
+                    },
+                },
+                /* Pass meta data of file */
+                metaData: {
+                    /* file name */
+                    fileName: paper_details.arxiv_id+".pdf",
+                    id: "{{user.id}}" + paper_details.arxiv_id+paper_details.updated
+                }
+            }, viewerConfig);
+            console.log("{{user.id}}" + paper_details.arxiv_id+paper_details.updated)
+            previewFilePromise.then(function (adobeViewer) {
+                blockAutoPDFSync = false
+                // Set annotation
+                if (paper_details.user_paper.pdf_annotation != null)
+                    adobeViewer.getAnnotationManager().then(function (annotationManager) {
+                            blockAutoPDFSync = true
+                            console.log("Set annotations", JSON.parse(paper_details.user_paper.pdf_annotation))
+                            annotationManager.addAnnotations(JSON.parse(paper_details.user_paper.pdf_annotation))
+                            .then(() => {console.log("Success. Loaded Annotations");blockAutoPDFSync=false;})
+                            .catch(function (error) {
+                                console.log(error);
+                                alert("Annotation Loading Error",error);
+                                blockAutoPDFSync=false;
+                            });
+                        });
+                // Upload annotation
+                syncPDFFunction = function(event){
+                    adobeViewer.getAnnotationManager().then(function (annotationManager) {annotationManager.getAnnotations()
+                        .then(function (result) {
+                            console.log("GET all annotations", result);
+                            postUserPaper(paper_details.id, {pdf_annotation: JSON.stringify(result)})
+                            paper_details.user_paper.pdf_annotation = result
+                        })
+                        .catch(function (error) {
+                            console.log(error);
+                            alert("Sync Error",error);
+                        });
+                    });
+                };
+                // Hock Annotation Change Even to Upload
+                adobeViewer.getAnnotationManager().then(annotationManager => {
+                    annotationManager.registerEventListener(
+                        function(event) { 
+                            // console.log(event.type)
+                            if (!blockAutoPDFSync)
+                                syncPDFListenerFunction(); 
+                        },
+                        {
+                            // Pass the events to receive.
+                            // If no event is passed in listenOn, then all the annotation events will be received.
+                            listenOn: [
+                                "ANNOTATION_ADDED", "ANNOTATION_DELETED", "ANNOTATION_UPDATED"
+                            ]
+                        }
+                    );
+                });
+            });
+        return;
+    }
+    if (name=="full-html"){
+        var vanityURL = `http://www.arxiv-vanity.com/papers/${paper_details.arxiv_id}/`
+        $.get({
+            url: `/scrape_arxiv_vanity?arxiv_id=${paper_details.arxiv_id}/`,
+            dataType: "html",            
+            success: function (response) {
+                var data = JSON.parse(response)
+                if ("vanity" in additionalCSS)
+                    additionalCSS["vanity"].detach()
+                additionalCSS["vanity"] = $($.parseHTML(`<style>${data['style']}</style>`));
+                $("head").append(additionalCSS["vanity"]);
+                detailViewerMain[name] = $($.parseHTML(`
+                <div class="overflow-auto" style="width: 100%;">
+                ${data['main_html']}
+                </div>
+                `));
+                detailViewerMain[name].appendTo(detailViewer);
+                detailViewerMain[name].mouseup(tagSelectedText);
+
+            },
+            error: function (error) {
+                detailViewerMain[name] = $($.parseHTML(`<div>
+                Failed to load <a href="${vanityURL}">
+                Visit Arxiv Vanity ${vanityURL}
+                </a><div>
+                `));
+                detailViewerMain[name].appendTo(detailViewer);
+                alert("Can not get "+ vanityURL);
+            }
+        });
+        // $($.parseHTML(`
+        // <iframe src="http://www.arxiv-vanity.com/papers/${paper_details.arxiv_id}" style="width: 100%;height: 100%;"/>
+        // `));
+    }
+});
+
+
+// ==========================================
+// Download latest paper button
+// ==========================================
+// function updateLastestPaperRequest(max_results=1000, done_fun=null){
+//     // console.log(activeSubject.size)
+//     if (activeSubject.size == 0){
+//         done_fun()
+//         return
+//     }
+//     var subjectStr = Array.from(activeSubject).join(' ')
+//     // console.log(window.location.origin + "/update/")
+//     // console.log(max_results, done_fun)
+//     $.ajax({
+//         method: "POST",
+//         url: window.location.origin + "/update/",
+//         data: {csrfmiddlewaretoken : csrfToken,  subject: subjectStr, max_results: max_results},
+//     }).done(done_fun);
+// }
+
+// $('#refreshBtn').on('click', function(){
+//     loadMore.find("h5").html(`<div class="spinner-border text-primary" role="status">
+// </div>`)
+//     loadMore.detach()
+//     paperCards.empty();
+//     loadMore.appendTo(paperCards);
+//     updateLastestPaperRequest(100, loadPaperCards);
+//     $(this).scrollTop()
+//     // console.log(this)
+// });
+
+
+// ==========================================
+// Subject Selector
+// ==========================================
+subjectSelector.on('click', 'li', function(event) {
+    var targetSubject = this;
+
+    // Preference Setup Button
+    if (this == editSubjectBtn[0]){
+        editSubjectPopForm.toggleClass("d-none");
+        $(this).children('a').children('i').toggleClass('bi-dash-square-dotted')
+        $(this).children('a').children('i').toggleClass('bi-plus-square-dotted')
+        
+        if(! editSubjectPopForm.hasClass("d-none")){
+            editSubjectPopForm.find("textarea").val(
+                Array.from(activeSubject).filter(function(x) {return x != "all"}).join(','))
+        }
+        return;
+    }
+    if (this == subjectAll[0]){
+        // alert("yes");
+        $(this).children('a').toggleClass("active");
+        var classnames = ["bg-secondary", "disabled", "text-white"]
+        subjectSelector.children("li").children('a').toggleClass(classnames)
+        editSubjectBtn.children('a').toggleClass(classnames)
+        $(this).children('a').toggleClass(classnames);
+        loadPaperCards();
+        return;
+    }
+    if ($(this).children('a').hasClass("disabled"))
+        return;
+
+    $(this).children('a').toggleClass("active");
+    var subjectName = $(this).children('a').text().trim();
+    if ($(this).children('a').hasClass("active"))
+        activeSubject.add(subjectName);
+    else
+        activeSubject.delete(subjectName);
+    // console.log(activeSubject);
+    loadPaperCards();
+});
+// Define Subjectform Submit Function
+editSubjectPopForm.children('form').submit(function(event){
+    event.preventDefault();
+    postUserPreference($(this).serialize());
+    location.reload();
+});
+// Load Subject Selector
+function loadSubjectSelector(){
+    var preferSubjects = userPreference.prefer_categories;
+    subjectSelector.empty();
+    activeSubject.clear();
+    $(subjectAll).appendTo(subjectSelector);
+    for(i in preferSubjects){
+        var subject = $.parseHTML(`<li class="nav-item">
+            <a class="nav-link fw-light fs-8  p-1 my-1 active" href="#">
+            ${preferSubjects[i].trim()}
+            </a>
+        </li>`);
+        $(subject).appendTo(subjectSelector);
+        activeSubject.add(preferSubjects[i].trim());
+    }
+    editSubjectBtn.appendTo(subjectSelector)
+    if(!$.isEmptyObject(requestGET))
+        $(subjectAll).click()
+    // console.log(activeSubject)
+}
+
+
+// ==========================================
+// Paper Filters
+// ==========================================
+filterRead.on('click', 'input', function(event) {
+    loadPaperCards();
+});
+filterArchive.on('click', 'input', function(event) {
+    loadPaperCards();
+});
+filterStar.on('click', 'input', function(event) {
+    loadPaperCards();
+});
+filterTagMode.on('click', 'input', function(event) {
+    loadPaperCards();
+});
+
+// ==========================================
+// Tagging Function Function
+// ==========================================
+
+// Initialize Tag Selection
+var clearingTagsMultiSelect = false
+function initTagsMultiSelect() {
+    $('#tagsMultiSelect').select2({
+        closeOnSelect: false,
+        placeholder: 'Select Tags Here',
+        allowClear: true,
+        tokenSeparators: [','],
+        ajax: {
+            url: window.location.origin + 
+                `/api/user_tags/?format=json`,
+            dataType: 'json',
+            processResults: function (data) {
+                var results = []
+                for (i in data){
+                    results.push({
+                        id: data[i],
+                        text: data[i],
+                    })
+                }
+                return {
+                    results: results
+                };
+            },
+            cache: true
+        }
+    });
+    $('#tagsMultiSelect').on('select2:select', function (e) {
+        clearingTagsMultiSelect=false
+        loadPaperCards();
+    });
+    $('#tagsMultiSelect').on('select2:unselect', function (e) {
+        if (clearingTagsMultiSelect)
+            return;
+        loadPaperCards();
+    });
+    $('#tagsMultiSelect').on('select2:clear', function (e) {
+        loadPaperCards();
+        clearingTagsMultiSelect=true
+    });
+}
+
+// Allow Setting Tags from selecting the mainviewer
+var select2TagPopoverJQ = null;
+function deleteSelect2TagPopover(){
+    if (select2TagPopoverJQ == null)
+        return;
+    select2TagPopoverJQ.detach()
+    var popover = bootstrap.Popover.getInstance(select2TagPopoverJQ[0]);
+    popover.dispose();
+    select2TagPopoverJQ = null
+}
+// Global Function to delete select2tag popover
+$(document).click(
+    function (e){
+        var event = event || window.event;
+        var selectedStr = '';    
+        selectedStr = window.getSelection().toString();
+        if (selectedStr == ''){
+            deleteSelect2TagPopover()
+        }
+    }
+)
+function addPaperTags(str){
+    try {
+        str = str.trim();
+        // capitalize(str)
+        // console.log(activePaper)
+        // alert(str)
+        var paperid = activePaper.id;
+        var paper=$(document.getElementById(paperid));
+        if(paper.length == 0 || str == ""){
+            return false;
+        }
+        var paper_details = paper.data("paper-details");
+        paper_details.user_paper.tags.push(str)
+        paper_details.user_paper.tags = [...new Set(paper_details.user_paper.tags)]
+        setPaperTags(paper);
+        hideTagsForm(paper);
+        return false;
+    } catch (error) {
+        alert("Error! " + error.msg)
+        console.log(error);
+        return false;
+    }
+}
+function tagSelectedText(event) {
+    var event = event || window.event;
+    var selectedStr = '';    
+    selectedStr = window.getSelection().toString();
+    selectedStr.trim()
+    selectedStr = selectedStr.replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase());
+    if (selectedStr == ''){
+        deleteSelect2TagPopover()
+        return selectedStr;
+    }
+    selectedStr = String.raw`${selectedStr}`
+
+    // console.log(activePaper);
+    // createTagSelectPopover(selectedStr)
+
+    range = window.getSelection().getRangeAt(0).cloneRange();
+    // console.log(window.getSelection().getRangeAt(0))
+    range.collapse(false);
+    if (select2TagPopoverJQ != null)
+        deleteSelect2TagPopover()
+    var popoverHtml = `
+        <span>${selectedStr}</span> <button class="btn btn-outline-primary p-0 border-0" onclick="addPaperTags('${selectedStr}');" style="margin-top: -10px;"><i class="bi bi-bookmark-plus p-0 m-0"></i></button>
+        `
+        // <form onsubmit="setPaperTagsFormSubmit(this,'??');return false;">
+        //     <label class="form-label">New Tags:</label>
+        //     <input type="text" name="newTags" class="form-control">
+        //     <div class="form-text">Saperate with comma.</div>
+        //     <br>
+        //     <button type="submit" name="saveTags" class="btn btn-sm btn-primary mt-2">Save</button>
+        // </form>
+    
+    select2TagPopoverJQ = $($.parseHTML(`<span data-toggle="popover"></span>`));
+    select2TagPopoverJQ[0].setAttribute("data-bs-content", popoverHtml);
+
+    range.insertNode(select2TagPopoverJQ[0])
+    // $('body').append(ghostPopover)
+    var popover = new bootstrap.Popover(select2TagPopoverJQ[0], {
+        placement: 'top',
+        container: detailViewer.children("div:not(.d-none)")[0],
+        html: true,
+        sanitize: false,
+        trigger: "manual",
+        template: '<div class="popover" role="tooltip"><div class="popover-arrow"></div><h3 class="popover-header"></h3><div class="popover-body p-1 m-1"></div></div>'
+    })
+    // ghostPopover.css({
+    //     position: 'absolute'
+    //     // left: event.pageX+"px",
+    //     // top: event.pageY+"px"
+    // })
+    popover.show()
+    // alert(selectedStr);
+}
+// =====================================================
+// First time loading 
+// =====================================================
+// Load paper cards for the first time
+loadMore.appendTo(paperCards);
+
+// Load user preference
+/* Wait for Adobe Document Services PDF Embed API to be ready */
+document.addEventListener("adobe_dc_view_sdk.ready", function () {
+    loadUserPreference(done_funcs=[loadSubjectSelector, loadPaperCards, initTagsMultiSelect]);
+});
+
+
+
+</script>
+
+
+{% endblock %}

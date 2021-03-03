@@ -1,0 +1,10 @@
+{% extends "registration/base.html" %}
+
+{% block logincontent %}
+
+<div class="alert alert-info" role="alert">
+    You have logged out! <br><br>
+    <a class="btn btn-sm btn-outline-primary" href="{% url 'login' %}?next=/">Login</a>
+</div>
+
+{% endblock %}

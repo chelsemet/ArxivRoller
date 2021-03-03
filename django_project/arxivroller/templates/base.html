@@ -1,0 +1,179 @@
+{% load static %}
+{% load compress %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords" content="arxiv,paper,adacemic,machine learning">
+    <meta name="description" content="Highly customizable arXiv paper viewer for academic research.">
+
+    <title>{% block head_title %}arXiv Viewer{% endblock %}</title>
+    <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous"> -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css">
+    <!-- <script src="https://kit.fontawesome.com/690fd1d965.js" crossorigin="anonymous"></script> -->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.11.2/css/all.css" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap"
+    />
+    <link rel="stylesheet" href="{% static 'css/mycss.css' %}">
+    <link rel="stylesheet" href="{% static 'css/vanity.css' %}">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <!-- <link rel="stylesheet" href="{% static 'css/mdb.min.css' %}"> -->
+
+    <!-- Apple Settings -->
+    <link rel="apple-touch-icon" href="{% static 'images/apple-touch-icon.png' %}">
+    <link rel="apple-touch-icon" sizes="57x57" href="{% static 'images/apple-touch-icon-57x57.png' %}">
+    <link rel="apple-touch-icon" sizes="72x72" href="{% static 'images/apple-touch-icon-72x72.png' %}">
+    <link rel="apple-touch-icon" sizes="76x76" href="{% static 'images/apple-touch-icon-76x76.png' %}">
+    <link rel="apple-touch-icon" sizes="114x114" href="{% static 'images/apple-touch-icon-114x114.png' %}">
+    <link rel="apple-touch-icon" sizes="120x120" href="{% static 'images/apple-touch-icon-120x120.png' %}">
+    <link rel="apple-touch-icon" sizes="144x144" href="{% static 'images/apple-touch-icon-144x144.png' %}">
+    <link rel="apple-touch-icon" sizes="152x152" href="{% static 'images/apple-touch-icon-152x152.png' %}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/apple-touch-icon-180x180.png' %}">
+    <link rel="apple-touch-startup-image" href="{% static 'images/launch.png' %}">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Daily arXiv">
+
+    <!-- compress css very slow if in-request, optimizae when develop -->
+    {% compress css %}
+    <link type="text/x-scss" href="{% static 'scss/myscss.scss' %}" rel="stylesheet" media="screen">
+    {% endcompress %}
+    {% block css %} 
+    <style>
+        .debugboarder{
+            border: 1px solid rgb(0, 0, 0);
+        }
+
+    </style>
+    {% endblock %}
+
+    <meta name="theme-color" content="red">
+
+</head>
+<body class="d-flex flex-column" id="overall-flex-box"  style="height: 100vh;">
+
+    
+<header class="shadow" style="position: relative;z-index: 10;">
+<nav class="navbar navbar-expand-md navbar-dark bg-primary bg-gradient text-light border-secondary">
+    <div class="container-fluid">
+        {% block extend_menu_front %} 
+        {% endblock %}
+        <a class="navbar-brand text-light" href="{% url 'index' %}">
+            arXiv Viewer
+            <!-- TODO: Add icon -->
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+        <!-- <span class="navbar-toggler-icon"></span> -->
+        <i class="bi bi-grid-3x2-gap-fill fs-4" style="color: #e9ecef;"></i>
+        </button>
+    
+        <div class="collapse navbar-collapse" id="navbarMain">
+        <!-- <ul class="navbar-nav">
+            <li class="nav-item">
+                <a class="nav-link active" aria-current="page" href="#">Home</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">Features</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">Pricing</a>
+            </li>
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                Dropdown link
+                </a>
+                <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                <li><a class="dropdown-item" href="#">Action</a></li>
+                <li><a class="dropdown-item" href="#">Another action</a></li>
+                <li><a class="dropdown-item" href="#">Something else here</a></li>
+                </ul>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" aria-current="page" href="#">Home</a>
+            </li>
+        </ul> -->
+        
+        {% block extend_menu_mid %} 
+        {% endblock %}
+
+        <!-- Push things to right -->
+        <div class="ms-auto d-flex flex-column flex-md-row"> 
+        {% block header_user %} 
+        {% if user.is_authenticated %}
+            <!-- <i class="bi bi-person-badge-fill fs-4 pt-0"></i> -->
+            <span class="navbar-text mx-2">
+                Logged in as <a href="{% url 'user_profile' %}">{{user.get_username }}</a> 
+                | <a href="{% url 'logout' %}">Logout</a>
+            </span>
+        {% else %}
+        <a class="btn btn-sm btn-outline-light mx-2" href="{% url 'login' %}?next={{ request.get_full_path }}">Login</a>
+        {% endif %}
+        {% endblock %}
+        </div>
+        <!-- <form class="form-inline my-2 my-lg-0">
+            <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+            <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+        </form> -->
+        </div>
+    </div>
+</nav>
+</header>
+
+<div class="d-flex flex-grow-1 overflow-auto" id="content-flex-box">
+    
+{% block content %}
+
+{% endblock %}
+</div>
+
+
+
+<script src="https://code.jquery.com/jquery-3.5.1.js" integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc=" crossorigin="anonymous"></script>
+<!-- <script src="https://unpkg.com/@popperjs/core@2"></script> -->
+<!-- <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script> -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js" integrity="sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0" crossorigin="anonymous"></script> -->
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.6.0/dist/umd/popper.min.js" integrity="sha384-KsvD1yqQ1/1+IA7gi3P0tyJcT3vR+NdBTt13hSJ2lnve8agRGXTTyNaBYmCR/Nwi" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.min.js" integrity="sha384-nsg8ua9HAw1y0W1btsyWgBklPnCUAFLuTMS2G72MMONqmOymq585AcH49TLBQObG" crossorigin="anonymous"></script>
+<!-- <script type="module" src="https://unpkg.com/ionicons@5.2.3/dist/ionicons/ionicons.esm.js"></script> -->
+<!-- <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script> -->
+<!-- <script type="text/javascript" src="{% static 'js/mdb.min.js' %}"></script> -->
+<!-- <script type="text/javascript" src="{% static 'js/myjs.js' %}"></script> -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+{% block js %} 
+
+{% endblock %}
+
+<script type="text/javascript">
+    // Load popover
+    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+        var popover = bootstrap.Popover.getInstance(popoverTriggerEl);
+        console.log(popover);
+        if (popover === null)
+            popover = new bootstrap.Popover(popoverTriggerEl);
+        return popover;
+    })
+    // Load tooptips
+    // var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    // var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    //   return new bootstrap.Tooltip(tooltipTriggerEl)
+    // });
+    // var collapseElementList = [].slice.call(document.querySelectorAll('.collapse'))
+    // var collapseList = collapseElementList.map(function (collapseEl) {
+    //   return new bootstrap.Collapse(collapseEl)
+    // })
+    // var toastElList = [].slice.call(document.querySelectorAll('.toast'))
+    // var toastList = toastElList.map(function (toastEl) {
+    // return new bootstrap.Toast(toastEl)
+    // })
+    // toastList[0].show();
+    // console.log(toastElList[0])
+</script>
+
+</body>
+</html>

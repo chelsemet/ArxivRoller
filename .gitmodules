@@ -1,0 +1,6 @@
+[submodule "django_project/arxivroller/webapp/arxiv_vanity"]
+	path = django_project/arxivroller/webapp/arxiv_vanity
+	url = https://github.com/arxiv-vanity/arxiv-vanity.git
+[submodule "django_project/arxivroller/webapp/scraper/scihub_pythonapi"]
+	path = django_project/arxivroller/webapp/scraper/scihub_pythonapi
+	url = https://github.com/zaytoun/scihub.py.git

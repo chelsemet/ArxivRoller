@@ -1,0 +1,55 @@
+{% extends "registration/base.html" %}
+
+{% block logincontent %}
+
+
+{% if form.errors %}
+<div class="alert alert-warning" role="alert">
+<ul class="errorlist">
+{% for error in form.non_field_errors %}
+<li><strong>{{ error|escape }}</strong></li>
+{% endfor %}
+{% for field in form %}
+      {% for error in field.errors %}
+      <li><strong>{{field.label}}: {{ error|escape }}</strong></li>
+      {% endfor %}
+{% endfor %}
+</ul>
+</div>
+{% endif %}
+
+
+<form method="post" action="{% url 'login' %}" autocomplete="on">
+    {% csrf_token %}
+    <div class="row mb-3">
+      <div class="col-sm-10">
+        <div class="input-group">
+        <span class="input-group-text">Username</span>
+        <input type="text" class="form-control" name="username" autofocus autocapitalize="none" autocomplete="username" maxlength="150" required id="id_username">
+        </div>
+       </div>
+    </div>
+    <div class="row mb-3">
+      <div class="col-sm-10">
+        <div class="input-group">
+        <span class="input-group-text">Password</span>
+        <input type="password" class="form-control" name="password" autocomplete="current-password" required id="id_password">
+        </div>
+      </div>
+    </div>
+    <button type="submit" class="btn btn-primary" name="loginBtn">Log in</button>
+    <input type="hidden" name="next" value="{{ next }}" />
+  </form>
+
+{# Assumes you setup the password_reset view in your URLconf #}
+<br>
+<p><a href="{% url 'password_reset' %}">Lost password?</a></p>
+<p><a href="{% url 'user_register' %}">Register New User</a></p>
+
+{% endblock %}
+
+{% block js %} 
+<script type="text/javascript">
+// console.log("{{ form.errors }}")
+</script>
+{% endblock %}

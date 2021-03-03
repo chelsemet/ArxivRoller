@@ -410,6 +410,8 @@ csrfToken = csrfToken.value;
 var majorQuery = {
 
 };
+var startId = 0;
+var maxReturns = 20;
 var paperCards = $('#paperCards');
 var loadMore = $($.parseHTML(`<div class="list-group-item list-group-item-action p-0 card rounded-0">
     <div class="card-header rounded-0 border-0">
@@ -970,10 +972,16 @@ function loadPaperCards(empty = true){
     loadMore.find("h5").html(`<div class="spinner-border text-primary" role="status">
 </div>`)
 
+    // If still having the papercard will have bugs if star/unstar/any change of paper status, so we always clear
+    // if(empty)
+    //     startId = 0;
+    // else
+    //     startId = paperCards.children().length-1;
+    startId = 0;
     if(empty)
-        var startId = 0;
+        maxReturns = 20;
     else
-        var startId = paperCards.children().length-1;
+        maxReturns = maxReturns+20;
 
     $.get(
         window.location.origin + 
@@ -984,14 +992,16 @@ function loadPaperCards(empty = true){
         selectedTagsStr +
         "&&orderBy=latest" + 
         "&&start_id=" + startId + 
+        "&&max_returns=" + maxReturns +
         "&&format=json",
         {},
         function(data) {
             loadMore.detach()
-            if(empty){
-                paperCards.empty();
-                detailViewer
-            }
+            // If still having the papercard will have bugs if star/unstar/any change of paper status, so we always clear
+            // if(empty){
+            //     paperCards.empty();
+            // }
+            paperCards.empty();
             // console.log(startId, empty)
             // console.log(data)
             for(i in data){

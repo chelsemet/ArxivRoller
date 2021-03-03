@@ -134,7 +134,8 @@ Then in your deployment code, please run command `python manage.py compress --fo
 
 - [ ] Advanced Search UI
 - [ ] Browse History
-- [ ]  
+- [ ] Take Notes
+
 
 
 ## Acknowledge 

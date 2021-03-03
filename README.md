@@ -1,4 +1,8 @@
-# README
+# View Daliy Updates from arXiv
+
+https://arxiv.gtflashlab.com/
+
+![Screen Shot](static/screenshot.png)
 
 ## Lanuch DB
 

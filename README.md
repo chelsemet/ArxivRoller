@@ -133,11 +133,21 @@ Then in your deployment code, please run command `python manage.py compress --fo
 ## TODO List
 
 - [ ] Advanced Search UI
+- [ ] Keyboard support for switching paper cards
 - [ ] Browse History
-- [ ] Take Notes
+- [ ] Support use semantic scholar/native arxiv/google scholar search (by scraping? lol).
+- [ ] Take Notes (like blog?)
+- [ ] Improve Mobile Experience
+- [ ] Replace Abstract by 'TL;DR' in paper cards. Use GPT ? LOL
+- [ ] Highly Customizable Feed. Use a bundle of search rules.
+- [ ] Better Account homepage management
+- [ ] Visual Analyze/Management of papers? (e.g. how many paper read)
+- [ ] Paper recommendation.
+- [ ] If we have more users, build community by sharing stars, notes, tags?
+- [ ] Import papers from other catrgories.
 
 
 
 ## Acknowledge 
 
-Powered by Arxiv.com, Mendeley, Sematic Scholar, Sci-Hub [python api](https://github.com/zaytoun/scihub.py/tree/master)
+Powered by arXiv.com, Mendeley, Sematic Scholar

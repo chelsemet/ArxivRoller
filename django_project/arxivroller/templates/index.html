@@ -254,12 +254,11 @@
 </div>
 
 <div class="col card border-0 rounded-0 bg-light overflow-auto my-scrollbar d-none d-md-flex" style="height: 100%;"  id="detailViewerCol">
-    <div class="hideControl fixed-action-btn-lt p-0 m-0" style="position: absolute; left:0; top:0;">
-        <a class="p-1 m-0 btn btn-primary shadow btn-lg" 
-        style="border-bottom-left-radius: 0;border-top-left-radius: 0;border-top-right-radius: 0;border-bottom-right-radius: 0.6rem;"
+    <div class="hideControl fixed-action-btn-lt p-0 m-0" style="position: absolute; left:50%; top: -12px; transform: rotate(90deg);">
+        <a class="p-1 m-0 btn btn-primary btn-lg" 
+        style="border-bottom-left-radius: 0;border-top-left-radius: 0;border-top-right-radius: 0.6rem;border-bottom-right-radius: 0.6rem;"
         id="detailViewerHeaderControl">
             <i class="fas fa-caret-left"></i>
-            
         </a>
     </div>
     <header id="detailViewerHeader">
@@ -328,6 +327,7 @@ $('#detailViewerHeaderControl').click(function (){
     $("#detailViewerHeader").toggleClass("hideTarget")
     $(this).children("i").toggleClass("fa-caret-right")
     $(this).children("i").toggleClass("fa-caret-left")
+    $("#bodyHeader").toggleClass("d-none")
 })
 // $('#detailViewerHeaderControl').hover(function (){
 //     // $("#detailViewerHeader").toggleClass("hideTarget")

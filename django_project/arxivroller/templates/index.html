@@ -53,34 +53,37 @@
 
 {% block extend_menu_front %} 
 
-<button class="btn btn-outline-light me-1 pt-0" type="button" style="border:none;"  id="sidebarMenuToggle">
+<button class="btn btn-outline-light pt-0 border-0" type="button"   id="sidebarMenuToggle">
     <!-- <span class="navbar-toggler-icon"></span> -->
-    <i class="bi bi-layout-sidebar fs-4"></i>
+    <i class="bi bi-layout-sidebar-inset fs-4"></i>
 </button>  
+<button class="btn btn-outline-light pt-0 ms-0 border-0 d-none" type="button"  id="showPaperList">
+    <i class="bi bi-layout-split fs-4"></i>
+</button>  
+<button class="btn btn-outline-light pt-0 ms-0 border-0 d-none" type="button"  id="showDetailViewer">
+    <i class="bi bi-layout-split fs-4"></i>
+</button>  
+<span class="me-3"> | </span>
 
 {% endblock %}
 
 
 {% block extend_menu_mid %} 
-<div class="d-flex flex-column flex-md-row">
-<form class="d-flex" id="searchForm">
-    {% if request.GET.mainText %}
-    <input class="form-control me-2" type="text" value="{{request.GET.mainText}}" name="mainText" aria-label="Search">
-    {% else %}
-    <input class="form-control me-2" type="search" placeholder="Search" name="mainText" aria-label="Search">
-    {% endif %}
-    <button class="btn btn-outline-success" type="submit" id="searchSubmitBtn">Search</button>
+<!-- <div class="d-flex flex-column flex-md-row"> -->
+<form class="flex-grow-1 d-flex" id="searchForm" >
+    <select class="form-select" style="width:100px;border-bottom-right-radius: 0;border-top-right-radius: 0;" aria-label="Search Option"  name="searchOption">
+        <option value="bothTextFTS" title="Search Title/Abstract with FTS" selected>Text</option>
+        <option value="bothTextSimple" title="Search Title/Abstract with Exact Match (Slow)">Text (Exact Match)</option>
+        <option value="arxivID">arXiv ID</option>
+        <option value="s2ID" title="Semantic Scholar ID">S2 ID</option>
+    </select>
+    <input class="flex-grow-1 form-control border-0 rounded-0" type="search" placeholder="Search" name="mainText" aria-label="Search">
+    <button class="btn btn-light pt-0" style="border-bottom-left-radius: 0;border-top-left-radius: 0;" type="submit" id="searchSubmitBtn"><i class="bi bi-search"></i></button>
 </form>
-</div>
+<!-- </div> -->
 {% endblock %}
 
 {% block header_user %} 
-<button class="btn btn-outline-light pt-0 pb-1 px-1 d-none" type="button" style="border:none;" id="showPaperList">
-    <i class="bi bi-card-list fs-4"></i>
-</button>  
-<button class="btn btn-outline-light pt-0 pb-1 px-1 d-none" type="button" style="border:none;" id="showDetailViewer">
-    <i class="bi bi-card-heading fs-4"></i>
-</button>  
 
 {{ block.super }}
 {% endblock %}
@@ -456,6 +459,16 @@ var filterStar = $("#filterStar").closest('.btn-group');
 var filterTagMode = $("#filterTagMode")
 var searchForm = $("#searchForm");
 var searchSubmitBtn = $("#searchSubmitBtn");
+if ("mainText" in requestGET && requestGET["mainText"]!="")
+    searchForm.find("[name='mainText']")[0].defaultValue = requestGET["mainText"]
+if ("searchOption" in requestGET){
+    try{
+        searchForm.find("[name='searchOption']").find("option").filter(`[value='${requestGET["searchOption"]}']`)[0].selected=true;
+    } catch(err) {
+        console.log("searchOption:", requestGET["searchOption"], err)
+        delete requestGET.searchOption
+    }
+}
 
 
 // ==========================================
@@ -961,11 +974,25 @@ function loadPaperCards(empty = true){
     if(!$.isEmptyObject(requestGET)){
         var requestGETStr = '';
         for(const [ k, v ] of Object.entries(requestGET)){
-            if (k=="mainText"){
-                requestGETStr += `&&bothtext=${v}`;
+            if (k=="mainText" && v!=""){
+                if ("searchOption" in requestGET){
+                    if (requestGET["searchOption"] == 'bothTextFTS')
+                        requestGETStr += `&&bothtext=${v}&&searchEngine=fts`;
+                    else if (requestGET["searchOption"] == 'bothTextSimple')
+                        requestGETStr += `&&bothtext=${v}&&searchEngine=simple`;
+                    else if (requestGET["searchOption"] == 'arxivID')
+                        requestGETStr += `&&arxiv_id=${v}`;
+                    else if (requestGET["searchOption"] == 's2ID')
+                        requestGETStr += `&&s2_id=${v}`;
+                    else
+                        requestGETStr += `&&bothtext=${v}`;
+                } else {
+                    requestGETStr += `&&bothtext=${v}`;
+                }
                 continue;
             }
-            requestGETStr += `&&${k}=${v}`;
+            if (k != "searchOption")
+                requestGETStr += `&&${k}=${v}`;
         }
     }
 

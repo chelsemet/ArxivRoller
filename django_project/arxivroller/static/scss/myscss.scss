@@ -11,6 +11,9 @@ $secondary: #6c757d;
 @import "../bootstrap/scss/bootstrap";
 // @import "./mdb.free";
 
+// ===================================
+// BUTTON
+// ===================================
 $font-size-xs: $font-size-base * .6 !default;
 $border-radius-xs:            .12rem !default;
 
@@ -335,3 +338,36 @@ $zindex-fixed-action-button: 1030 !default;
     }
   }
 }
+
+
+// ===================================
+// OPACITY
+// ===================================
+$utilities: (
+  "opacity": (
+    property: opacity,
+    responsive: true,
+    values: (
+      0: 0,
+      25: .25,
+      50: .5,
+      75: .75,
+      100: 1,
+    )
+  )
+ );
+$utilities: (
+  "opacity": (
+    property: opacity,
+    class: opacity,
+    responsive: true,
+    state: hover,
+    values: (
+      0: 0,
+      25: .25,
+      50: .5,
+      75: .75,
+      100: 1,
+    )
+  )
+);

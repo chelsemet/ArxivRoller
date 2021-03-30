@@ -91,7 +91,7 @@
 {% block content %}
 
 
-<nav id="sidebarMenu" class="bg-light border-end border-2">
+<div id="sidebarMenu" class="d-flex flex-column d-flex justify-content-between bg-light border-end border-2">
     
     <div class="accordion  accordion-flush" id="accordionSidebarMenu">
 
@@ -227,7 +227,12 @@
     </div>
 
     </div>
-</nav>
+
+    <div class="d-flex justify-content-center py-3 my-3 container-fluid overflow-auto">
+    <button type="button" class="btn btn-primary" id="graphVisBtn">Graphvis (Beta)</button>
+    </div>
+
+</div>
 
 <div class="d-flex container-fluid flex-grow-1 overflow-auto">
 <div class="d-flex flex-grow-1 align-items-stretch row overflow-auto" id="mainContentView">
@@ -944,7 +949,7 @@ paperCards.on('click', '.paperCardBtn', function(event) {
 });
 
 // Refresh paper cards
-function loadPaperCards(empty = true){
+function getPaperQueryStr(){
     var subjectStr = ""; 
     if ($(subjectAll).children('a').hasClass("active"))
         subjectStr = "all";
@@ -996,6 +1001,10 @@ function loadPaperCards(empty = true){
         }
     }
 
+    var paperQueryStr = "overlapCats=" + subjectStr + filterStr + requestGETStr + selectedTagsStr;
+    return paperQueryStr
+}
+function loadPaperCards(empty = true){
     loadMore.find("h5").html(`<div class="spinner-border text-primary" role="status">
 </div>`)
 
@@ -1009,14 +1018,10 @@ function loadPaperCards(empty = true){
         maxReturns = 20;
     else
         maxReturns = maxReturns+20;
-
     $.get(
         window.location.origin + 
         "/api/papers/?"+
-        "overlapCats=" + subjectStr + 
-        filterStr +
-        requestGETStr +
-        selectedTagsStr +
+        getPaperQueryStr() +
         "&&orderBy=latest" + 
         "&&start_id=" + startId + 
         "&&max_returns=" + maxReturns +
@@ -1532,6 +1537,19 @@ function tagSelectedText(event) {
     popover.show()
     // alert(selectedStr);
 }
+
+
+
+// ==========================================
+// GraphVis Button
+// ==========================================
+var graphVisBtn = $("#graphVisBtn");
+graphVisBtn.click(function(event) {
+    window.location.replace(window.location.origin+"/graphvis?"+getPaperQueryStr());
+});
+
+
+
 // =====================================================
 // First time loading 
 // =====================================================

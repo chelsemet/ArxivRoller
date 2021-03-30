@@ -50,7 +50,7 @@ class PaperViewSet(viewsets.ModelViewSet):
     queryset = Paper.objects.all()
     serializer_class = PaperSerializer
 
-    def list(self, request):
+    def _get_list(self, request):
         start_time = time.time()
         user = request.user
 
@@ -197,7 +197,10 @@ class PaperViewSet(viewsets.ModelViewSet):
 
         print(f"Query Cost: {time.time()-start_time:.4f}")
         # start_time = time.time()
-        return Response(return_data)
+        return return_data
+    
+    def list(self, request):
+        return Response(self._get_list(request))
 
 # api for user preference
 class PreferenceSerializer(serializers.ModelSerializer):

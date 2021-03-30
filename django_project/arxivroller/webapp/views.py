@@ -38,6 +38,10 @@ def user_profile(request):
 def index(request):
     return render(request, 'index.html')
 
+@login_required(login_url='/accounts/login_require')
+def graphvis(request):
+    return render(request, 'graphvis.html')
+
 
 @login_required(login_url='/accounts/login_require')
 def update(request):

@@ -15,8 +15,8 @@ psql -d arxivroller_db
 
 ## Manage
 
-`runserver`
-`test`
+`python manage.py runserver`
+`python manage.py test`
 
 Scrape Papers from Arxiv:
 `python manage.py runscript scrape_arxiv --traceback`

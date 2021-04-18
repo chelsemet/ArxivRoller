@@ -38,7 +38,7 @@ def query_page_s2(paper_id):
     if "pdf_url" not in d or d["pdf_url"] is None:
         page_response = requests.get(PAGE_ROOT_URL + paper_id)
         soup = BeautifulSoup(page_response.text, 'html.parser')
-        print(soup.title)
+        # print(soup.title)
 
         if "[PDF]" in soup.title.string:
             for link in soup.find_all('a', {'class': 'alternate-source-link-button'}) + soup.find_all('a', {'class': 'button--primary'}):

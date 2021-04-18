@@ -76,6 +76,7 @@
         <option value="bothTextSimple" title="Search Title/Abstract with Exact Match (Slow)">Text (Exact Match)</option>
         <option value="arxivID">arXiv ID</option>
         <option value="s2ID" title="Semantic Scholar ID">S2 ID</option>
+        <option value="author">Author</option>
     </select>
     <input class="flex-grow-1 form-control border-0 rounded-0" type="search" placeholder="Search" name="mainText" aria-label="Search">
     <button class="btn btn-light pt-0" style="border-bottom-left-radius: 0;border-top-left-radius: 0;" type="submit" id="searchSubmitBtn"><i class="bi bi-search"></i></button>
@@ -819,7 +820,7 @@ paperCards.on('click', '.list-group-item', function(event) {
                 <div class="card-body m-0 p-1">
                 
                 
-                <h6 class="card-title"> ${paper_details.authors.map(x => `<a href="${window.location.origin + "/?author=" +x}"> ${x}</a>`).join(", ")} </h6>
+                <h6 class="card-title"> ${paper_details.authors.map(x => `<a href="${window.location.origin + "/?searchOption=author&mainText=" +x}"> ${x}</a>`).join(", ")} </h6>
 
                 <h6 class="card-subtitle mb-2 text-muted"> 
                     ${(paper_details.comment ? paper_details.comment  + " " : "" )} 
@@ -888,13 +889,13 @@ paperCards.on('click', '.list-group-item', function(event) {
                                 badgeHtml += `<a type="button" class="btn btn-outline-primary btn-xs" onclick="window.open('https://arxiv.org/pdf/${entry.arxivId}.pdf');">PDF</a> `
                                 badgeHtml += `<a type="button" class="btn btn-outline-warning btn-xs" onclick="window.open('${entry.url}');">Semantic Scholar</a> `
                                 badgeHtml += `<a type="button" class="btn btn-outline-success btn-xs" onclick="window.open('https://www.connectedpapers.com/main/${entry.paperId}');">Connected Papers</a> `
-                                redirectHtml = `<a type="button" class="btn btn-outline-primary px-1 py-0 me-1 mt-0 border-0" href="${window.location.origin + "/?arxiv_id=" +entry.arxivId}"><i class="fas fa-external-link-alt"></i></a>`
+                                redirectHtml = `<a type="button" class="btn btn-outline-primary px-1 py-0 me-1 mt-0 border-0" href="${window.location.origin + "/?searchOption=arxivID&mainText=" +entry.arxivId}"><i class="fas fa-external-link-alt"></i></a>`
                             }
                             else if (entry.paperId != ""){
                                 badgeHtml += `<a type="button" class="btn btn-outline-warning btn-xs" onclick="window.open('${entry.url}');">Semantic Scholar</a> `
                                 badgeHtml += `<a type="button" class="btn btn-outline-success btn-xs" onclick="window.open('https://www.connectedpapers.com/main/${entry.paperId}');">Connected Papers</a> `
                                 redirectHtml = `<a type="button" class="btn btn-outline-primary px-1 py-0 me-1 mt-0 border-0" href="${window.location.origin + "/?mainText=" +encodeURIComponent(entry.title)}"><i class="fas fa-search"></i></a>`
-                                redirectHtml += `<a type="button" class="btn btn-outline-primary px-1 py-0 me-1 mt-0 border-0" href="${window.location.origin + "/?s2_id=" +encodeURIComponent(entry.paperId)}"><i class="fas fa-download"></i></a>`
+                                redirectHtml += `<a type="button" class="btn btn-outline-primary px-1 py-0 me-1 mt-0 border-0" href="${window.location.origin + "/?searchOption=s2ID&mainText=" +encodeURIComponent(entry.paperId)}"><i class="fas fa-download"></i></a>`
                             }
                             else {
                                 redirectHtml = `<a type="button" class="btn btn-outline-primary px-1 py-0 me-1 mt-0 border-0" href="${window.location.origin + "/?mainText=" +encodeURIComponent(entry.title)}"><i class="fas fa-search"></i></a>`
@@ -906,7 +907,7 @@ paperCards.on('click', '.list-group-item', function(event) {
                             var entryHtml = $($.parseHTML(`<div class="card"><div class="card-body">
                                 <h5 class="card-title">${redirectHtml}${entry.title}</h5> 
                                 <h6 class="card-subtitle mb-2 text-muted"> 
-                                    ${entry.authors.map(x => `<a href="${window.location.origin + "/?author=" +x.name}"> ${x.name}</a>`).join(", ")} 
+                                    ${entry.authors.map(x => `<a href="${window.location.origin + "/?searchOption=author&mainText=" +x.name}"> ${x.name}</a>`).join(", ")} 
                                     <span class="fw-lighter">${entry.year}</span>
                                 </h6>
                                 ${badgeHtml}
@@ -989,6 +990,8 @@ function getPaperQueryStr(){
                         requestGETStr += `&&arxiv_id=${v}`;
                     else if (requestGET["searchOption"] == 's2ID')
                         requestGETStr += `&&s2_id=${v}`;
+                    else if (requestGET["searchOption"] == 'author')
+                        requestGETStr += `&&author=${v}`;
                     else
                         requestGETStr += `&&bothtext=${v}`;
                 } else {

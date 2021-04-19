@@ -2,6 +2,7 @@
 
 {% block css %} 
 {{ block.super }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/bumbeishvili/d3-tip-for-v6@4/d3-tip.min.css">
 {% endblock %}
 
 {% block extend_menu_front %} 
@@ -14,7 +15,47 @@
 
 {% block content %}
 <div class="col card border-0 rounded-0 bg-light overflow-auto my-scrollbar d-none d-md-flex" style="height: 100%;"  id="graphVisViewerCol">
-    BETA
+    <div class="row m-1">
+        <div class="col-md-4 px-0">
+            <div class="card my-2 mx-1">
+                <div class="card-body">
+
+                    <!-- <h6 class="card-subtitle mt-2 fw-bold">Input</h6> -->
+                    <h5 class="card-title fw-bold"> Basic Info</h5>
+
+                    <dl class="row" id="basicInfoList">
+                        
+                    </dl>
+                </div>
+            </div>
+
+            <div class="card my-2 mx-1">
+                <div class="card-body">                
+                    <h5 class="card-title fw-bold"> Control Panel</h5>
+                    
+                    <form>
+                        
+                        <label for="weightThreshold" class="form-label">Link Weight Threshold: </label>
+                        <output id="weightThresholdOut" name="weightThresholdOut" for="weightThreshold" >80</output> %
+                        <input type="range" class="form-range" min="0" max="100" step="1" value="80" id="weightThreshold" oninput="weightThresholdOut.value=weightThreshold.value">
+    
+                        <a href="#" class="btn btn-primary">Refresh Graph</a>
+                        
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8 px-0">
+            <div class="card my-2 mx-1">
+                <div class="card-body">                
+                    <h5 class="card-title fw-bold">Visualization</h5>
+                    <div id="visCanvas">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
@@ -24,79 +65,176 @@
 <!-- Load request data -->
 {{ request.GET |json_script:"requestGET" }}
 <script src="https://d3js.org/d3.v6.min.js"></script>
+<script src="https://unpkg.com/d3-v6-tip@1.0.6/build/d3-v6-tip.js"></script>
 <script type="text/javascript">
 const requestGET = JSON.parse(document.getElementById('requestGET').textContent);
-const maxReturns = 30
-console.log(requestGET)
+const maxReturns = 20
+// console.log(requestGET)
+
+// Setup Basic Info
+var basicInfoList = $("#basicInfoList");
+for (var [key, value] of Object.entries(requestGET)) {
+    if (key == "overlapCats")
+        key = "Subjects"
+    if (key == "archive_status"){
+        if (value == "false")
+            continue
+        else
+            key = "Archive Status"
+    }
+    if (key == "overlapTags")
+        key = "Tags"
+    basicInfoList.append(`<dt class="col-sm-3 text-muted">${key}</dt>`)
+    basicInfoList.append(`<dd class="col-sm-9 text-muted">${value}</dd>`)
+}
+basicInfoList.append(`<dt class="col-sm-3 text-muted">Max #</dt>`)
+basicInfoList.append(`<dd class="col-sm-9 text-muted">${maxReturns}</dd>`)
+
+
+// Control Panel Setting
+
+
+// Function for building visualization
 function build(data){
 
-    var links = data.links.filter(link => link.random_sim > 0.9);
-    var nodes = data.nodes;
+    var links = data.links;
+    // Format links
+    for (var l of links) {
+        l['reference_overlap_score'] = l['reference_overlap_score']*0.1;
+        l['citation_path_score'] = l['citation_path_score']*1;
+        
+        l['overall_score'] = l['reference_overlap_score']+l['citation_path_score']
+    } 
+    links.sort((p1,p2) => p1['overall_score'] < p2['overall_score'])
+    links = links.filter(l => l['overall_score']>0)
 
+
+    var nodes = data.nodes;
+    var nodeId2listId = {}
+    for (const i in nodes) {
+        nodeId2listId[nodes[i]['id']] = parseInt(i);
+    } 
+    // console.log(nodeId2listId)
+    for (var l of links) {
+        l['source_id'] = nodeId2listId[l['source']];
+        l['target_id'] = nodeId2listId[l['target']];
+    } 
+
+    var heightPerPaper = 30;
+    var nNodes = nodes.length;
     var margin = {top: 10, right: 30, bottom: 30, left: 40},
     width = 1000 - margin.left - margin.right,
-    height = 400 - margin.top - margin.bottom;
+    height = (nNodes*heightPerPaper + 500) - margin.top - margin.bottom;
 
     // append the svg object to the body of the page
-    var svg = d3.select("#graphVisViewerCol")
-    .append("svg")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
-    .append("g")
-    .attr("transform",
-            "translate(" + margin.left + "," + margin.top + ")");
+    var svg = d3.select("#visCanvas")
+        .append("svg")
+        .attr("viewBox", `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
+        .append("g")
+        .attr("transform",
+                "translate(" + margin.left + "," + margin.top + ")");
 
-    // Initialize the links
-    var link = svg
-    .selectAll("line")
-    .data(links)
-    .enter()
-    .append("line")
-        .style("stroke", "#aaa")
+    // Sort Papers
+    for (var i in nodes) {
+        nodes[i].order = parseInt(i);
+    } 
+    // console.log(nodes)
 
-    // Initialize the nodes
-    var node = svg
-    .selectAll("circle")
-    .data(nodes)
-    .enter()
-    .append("circle")
-        .attr("r", 20)
-        .style("fill", "#69b3a2")
+    // yScale 
+	var yScale = d3.scaleLinear()
+	  .domain([0, nNodes])
+	  .range([0, height]);
 
-        
-    // Let's list the force we wanna apply on the network
-    var simulation = d3.forceSimulation(nodes)                 // Force algorithm is applied to data.nodes
-        .force("link", d3.forceLink()                               // This force provides links between nodes
-            .id(function(d) { return d.id; })                     // This provide  the id of a node
-            .links(links)                                    // and this the list of links
-        )
-        .force("charge", d3.forceManyBody().strength(-400))         // This adds repulsion between nodes. Play with the -400 for the repulsion strength
-        .force("center", d3.forceCenter(width / 2, height / 2))     // This force attracts nodes to the center of the svg area
-        .on("end", ticked);
+	// enter code to define tooltip
+	var tool_tip = d3.tip().attr('class', 'd3-tip');
+	svg.call(tool_tip); 
 
-    // This function is run at each iteration of the force algorithm, updating the nodes position.
-    function ticked() {
-        link.attr("x1", function(d) { return d.source.x; })
-            .attr("y1", function(d) { return d.source.y; })
-            .attr("x2", function(d) { return d.target.x; })
-            .attr("y2", function(d) { return d.target.y; });
-        node.attr("cx", function (d) { return d.x+6; })
-            .attr("cy", function(d) { return d.y-6; });
-    }
+    // Draw Links
+	drawpaths();
+	
+	function drawpaths(){
+		svg.selectAll("path").remove();
+		
+		var path = svg.selectAll("path")
+		  .data(links)
+		  .enter()
+		  .append("path")
+		  .attr("render-order","-1")
+		  .attr('transform','translate(' +(margin.left + 170)+', 0)')
+		  .attr('d',function(d){
+			start = yScale(nodes[d.source_id].order)
+			end = yScale(nodes[d.target_id].order)
+			return ["M", margin.left, start,"A",(start - end)/2*4, ',',(start - end)/1.7, 0, 0, ',',start < end ? 1 : 0, 50, ',', end].join(' ');
+		  })
+		  .attr("fill", "none")
+		  .attr("stroke-opacity", 0.6)
+		  .attr("stroke-width", 1.5)
+		  .attr("stroke", "black");
+	};
 
+    
+	function hover_event(d){
+		svg.selectAll("path").remove();
+		
+		svg.selectAll("path")
+			.data(links)
+			.enter()
+			.append("path")
+			.attr("render-order","1")
+		    .attr('transform','translate(' +(margin.left + 170)+', 0)')
+		    .attr('d',function(d){
+                start = yScale(nodes[d.source_id].order)
+                end = yScale(nodes[d.target_id].order)
+				return ["M", margin.left, start,"A",(start - end)/2*4, ',',(start - end)/1.7, 0, 0, ',',start < end ? 1 : 0, 50, ',', end].join(' ');
+				})
+			.attr("fill", "none")
+			.attr("stroke-opacity",function(b){if (b.source == d.id || b.target == d.id){return 1;} else {return 0.2;}})
+			.attr("stroke-width",function(b){if (b.source == d.id || b.target == d.id){return 2;} else {return 1.5;}})
+			.attr("stroke", function(b){if (b.source == d.id || b.target == d.id){return "purple";} else {return "gray";}});
+	};	
+    
+	var label = svg.selectAll("g")
+        .data(nodes)
+        .enter()
+        .append("g")
+        .attr("font-family", "sans-serif")
+        .attr("font-size", 12)
+        .attr("text-anchor", "end");
+		  
+    label.append("text")
+        .attr("x",margin.left+200)
+        .attr("y",function(d){return yScale(d.order);})
+        .text(function(d){return d.title.substring(0,30);})
+        .on("mouseover", function(event, d){
+            hover_event(d); 
+            tool_tip.html("Title: " + d.title );
+            var x = event.x,
+                y = event.y;
+            tool_tip.show(event,this);
+            tool_tip.style('top', y);
+            tool_tip.style('left', x);
+        })
+        .on("mouseout.path", function(d){drawpaths();})
+        .on("mouseout.tip", tool_tip.hide);
+            
+    label.append("circle")
+        .attr("cx",margin.left+220)
+        .attr("cy",function(d){return yScale(d.order);})
+        .attr("r", 3);
+    
 }
 $.get(
-        window.location.origin + 
-        "/api/graphvis_papers/?"+
-        "orderBy=latest" + 
-        "&&start_id=0" + 
-        "&&max_returns=" + maxReturns +
-        "&&format=json",
-        requestGET,
-        function(data){
-            console.log(data);
-            build(data);
-        }
+    window.location.origin + 
+    "/api/graphvis_papers/?"+
+    "orderBy=latest" + 
+    "&&start_id=0" + 
+    "&&max_returns=" + maxReturns +
+    "&&format=json",
+    requestGET,
+    function(data){
+        // console.log(data);
+        build(data);
+    }
 )
 </script>
 {% endblock %}

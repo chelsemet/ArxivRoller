@@ -13,19 +13,30 @@ class GraphVisPaperViewSet(PaperViewSet):
             p['references'] = obj.references
             p['citations'] = obj.citations
 
-        # print(list_of_paper)
-        # Get links
+        # defein distance functions
+        def refOverlap(p1, p2):
+            return len(set(p1['references']) & set(p2['references']))
+        def citationPath(p1, p2):
+            overlap_ref = refOverlap(p1,p2)
+            if p2['arxiv_id'] in p1['references'] or p1['arxiv_id'] in p2['references']:
+                return 1, overlap_ref
+            if p2['arxiv_id'] in p1['references'] or p1['arxiv_id'] in p2['references']:
+                return 0.5, overlap_ref
+            return 0, overlap_ref
 
+        # Get links
         paper_relevence = []
         for j in range(len(list_of_paper)):
             for i in range(j):
-                paper_relevence.append(
-                    {
-                        'source': list_of_paper[i]['id'],
-                        'target': list_of_paper[j]['id'],
-                        'random_sim': random.random(),
-                        'const_sim': 1,
-                    })
+                rel = {
+                    'source': list_of_paper[i]['id'],
+                    'target': list_of_paper[j]['id'],
+                }
+                
+                rel['citation_path_score'], rel['reference_overlap_score'] = citationPath(list_of_paper[i], list_of_paper[j])
+
+                paper_relevence.append(rel)
+                # print(rel['reference_overlap_score'], rel['citation_path_score'])
 
 
         return_data = {

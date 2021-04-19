@@ -156,4 +156,4 @@ Powered by arXiv.com, Sematic Scholar
 
 **Partnership**
 
-<img src="https://research.semanticscholar.org/assets/logos/s2-logo.svg" width="200" height="400" />
+<img src="https://research.semanticscholar.org/assets/logos/s2-logo.svg" width="200" height="50" />

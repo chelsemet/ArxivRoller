@@ -49,6 +49,9 @@
             <div class="card my-2 mx-1">
                 <div class="card-body">                
                     <h5 class="card-title fw-bold">Visualization</h5>
+                    <div class="spinner-border text-primary" role="status" id="loadingSpin">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
                     <div id="visCanvas">
 
                     </div>
@@ -70,6 +73,7 @@
 const requestGET = JSON.parse(document.getElementById('requestGET').textContent);
 const maxReturns = 20
 // console.log(requestGET)
+var loadingSpin = $("#loadingSpin");
 
 // Setup Basic Info
 var basicInfoList = $("#basicInfoList");
@@ -96,7 +100,7 @@ basicInfoList.append(`<dd class="col-sm-9 text-muted">${maxReturns}</dd>`)
 
 // Function for building visualization
 function build(data){
-
+    loadingSpin.addClass('d-none')
     var links = data.links;
     // Format links
     for (var l of links) {

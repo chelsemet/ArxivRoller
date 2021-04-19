@@ -154,6 +154,6 @@ Then in your deployment code, please run command `python manage.py compress --fo
 
 Powered by arXiv.com, Sematic Scholar
 
-### Partnership
+**Partnership**
 
-![Semantic Scholar](https://research.semanticscholar.org/assets/logos/s2-logo.svg | width=100)
+<img src="https://research.semanticscholar.org/assets/logos/s2-logo.svg" width="200" height="400" />

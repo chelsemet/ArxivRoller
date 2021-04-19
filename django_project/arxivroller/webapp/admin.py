@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Paper, UserPreference, UserPaper
+from .models import Paper, UserPreference, UserPaper, S2Info
 
 # Register your models here.
 
@@ -23,3 +23,6 @@ class PaperAdmin(admin.ModelAdmin):
     exclude = ['categories_m2m', 'authors_m2m', 'user']
     list_display = ['title', 'updated']
 admin.site.register(Paper, PaperAdmin)
+
+
+admin.site.register(S2Info)

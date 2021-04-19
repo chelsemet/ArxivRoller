@@ -161,10 +161,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
-if DEBUG:
-    STATIC_ROOT = "C:\\Users\\Haoming\\Documents\\site_static"
-else:
-    STATIC_ROOT = BASE_DIR / "site_static"
+STATIC_ROOT = BASE_DIR / "site_static"
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
@@ -214,3 +211,13 @@ REST_FRAMEWORK = {
 PAPERS_MACHINE_LEARNING_CATEGORIES = ["cs.CL", "cs.LG", "cs.CV", "cs.AI", "cs.IR", "cs.DC", "cs.HC", "cs.NE", "stat.ML","math.OC"]
 with open(BASE_DIR / 'static' / 'Arxiv_ALL_SUBJECTS.txt', 'r') as f:
     ALL_CATEGORIES = [l.strip() for l in f]
+
+# Semantic Scholar
+try:
+    with open(BASE_DIR / 'credential' / 's2.json', 'r') as f:
+        SEMANTIC_SCHOLAR_CRED = json.load(f)
+        SEMANTIC_SCHOLAR_KEY = SEMANTIC_SCHOLAR_CRED['x-api-key']
+        SEMANTIC_SCHOLAR_URL = SEMANTIC_SCHOLAR_CRED['url']
+except:
+    SEMANTIC_SCHOLAR_KEY = None
+    SEMANTIC_SCHOLAR_URL = "https://api.semanticscholar.org"

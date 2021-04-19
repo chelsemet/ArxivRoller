@@ -1,4 +1,4 @@
-from .models import Paper, Author, Category, UserPreference, UserPaper
+from .models import Paper, Author, Category, UserPreference, UserPaper, S2Info
 from rest_framework import serializers, viewsets, status, permissions
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework.permissions import IsAuthenticated, BasePermission
@@ -67,8 +67,6 @@ class PaperViewSet(viewsets.ModelViewSet):
             # return Response("Not implemented Error", status=status.HTTP_400_BAD_REQUEST)
         elif search_unknown_id is not None:
             return Response("Not implemented Error", status=status.HTTP_400_BAD_REQUEST)
-            obj,_ = Paper.objects.update_from_s2_id(search_s2_id)
-            queryset = queryset.filter(arxiv_id=obj.arxiv_id)
 
         # Full Text Search
         def fullTextSearch(queryset, search_vector, search_query):

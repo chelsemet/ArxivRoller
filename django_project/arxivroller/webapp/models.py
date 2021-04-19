@@ -9,6 +9,11 @@ from django.contrib.auth.models import User
 from django.contrib.postgres.search import SearchVectorField, SearchVector
 from django.contrib.postgres.indexes import GinIndex
 
+import time
+import datetime
+import dateutil
+import dateutil.parser
+
 from .scraper.query import query_single_paper, query_multi_papers, query_papers_by_subject
 from .scraper.query_s2 import query_single_paper_s2
 
@@ -83,7 +88,8 @@ class PaperQuerySet(models.QuerySet):
         Raises:
             `arxiv_vanity.scraper.query.PaperNotFoundError`: If paper does not exist on arxiv.
         """
-        return self.update_or_create_from_api(query_single_paper_s2(paper_id))
+        _, _, obj, created = S2Info.objects.update_from_s2_id(paper_id)
+        return obj, created
 
     def machine_learning(self):
         """
@@ -119,7 +125,7 @@ class Paper(models.Model):
     Main model for paper
     """
     # ArXiV fields
-    arxiv_id = models.CharField(max_length=50, unique=True, db_index=True)
+    arxiv_id = models.CharField(max_length=100, unique=True, db_index=True)
     arxiv_version = models.IntegerField()
     title = models.TextField()
     published = models.DateTimeField()
@@ -230,6 +236,86 @@ class Paper(models.Model):
             self.save(using=using)
         return updated
 
+# Semantic Scholar Info
+class S2InfoQuerySet(models.QuerySet):
+    
+    def update_from_arxiv_id(self, arxiv_id, try_get_pdf=False):
+        if arxiv_id.startswith("s2:"):
+            return self.update_from_s2_id(arxiv_id[3:], try_get_pdf=try_get_pdf)
+
+        try:
+            paper_obj = Paper.objects.get(arxiv_id=arxiv_id)
+            if hasattr(paper_obj, 's2info'):
+                return self.update_from_s2_id(paper_obj.s2info.s2_id, try_get_pdf=try_get_pdf)
+            else:
+                return self.update_from_s2_id('arXiv:'+arxiv_id, try_get_pdf=try_get_pdf)
+        except Paper.objects.model.DoesNotExist:
+            raise NotImplementedError()
+
+        raise NotImplementedError()
+
+    def update_from_s2_id(self, paper_id, try_get_pdf=False):
+        """
+        Query the Semantic Scholar API and create a Paper from it.
+        Raises:
+            `arxiv_vanity.scraper.query.PaperNotFoundError`: If paper does not exist on arxiv.
+        """
+        
+        self._for_write = True
+        with transaction.atomic(using=self.db):
+            # Lock the row so that a concurrent update is blocked until
+            # update_or_create() has performed its save.
+
+            select_for_update = self.select_for_update()
+            try:
+                obj = select_for_update.get(s2_id=paper_id)
+            except select_for_update.model.DoesNotExist:
+                obj = None
+            created = (obj is None)
+            if created or (obj.updated-datetime.datetime.now(tz=dateutil.tz.tzutc())) > datetime.timedelta(days=30):
+                paper_info, s2_info = query_single_paper_s2(paper_id, try_get_pdf=try_get_pdf)
+                paper_obj, paper_created = Paper.objects.update_or_create_from_api(paper_info)
+                
+                with transaction.atomic(using=select_for_update.db):
+                    obj = select_for_update.create(paper=paper_obj, **s2_info)
+            else:
+                paper_obj, paper_created = obj.paper, False
+        return obj, created, paper_obj, paper_created
+
+
+class S2InfoManager(models.Manager):
+    pass
+class S2Info(models.Model):
+    """
+    Main model for paper
+    """
+    # S2 fields
+    s2_id = models.CharField(max_length=100, unique=True, db_index=True)
+    arxiv_id = models.CharField(max_length=100, unique=True, db_index=True)
+    citation_velocity = models.IntegerField()
+    corpus_id = models.IntegerField()
+    doi = models.CharField(max_length=100)
+    fields_of_study = ArrayField(models.CharField(max_length=70))
+    influential_citation_count = models.IntegerField()
+    is_open_access = models.BooleanField()
+    is_publisher_licensed = models.BooleanField()
+    topics = ArrayField(models.CharField(max_length=70))
+    url = models.URLField()
+    venue = models.CharField(max_length=100)
+    year = models.IntegerField()
+
+    # Date when updated from S2
+    updated = models.DateTimeField()
+
+    # citation
+    citations = ArrayField(models.CharField(max_length=100))
+    references = ArrayField(models.CharField(max_length=100))
+
+    # Paper 
+    paper = models.OneToOneField(Paper, on_delete=models.CASCADE)
+
+    # define manager
+    objects = S2InfoManager.from_queryset(S2InfoQuerySet)() 
 
 # User Specific Models
 

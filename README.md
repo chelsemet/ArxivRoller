@@ -152,7 +152,9 @@ Then in your deployment code, please run command `python manage.py compress --fo
 
 ## Acknowledge 
 
-Powered by arXiv.com, Sematic Scholar
+Supported by [Flash Research Group](https://www2.isye.gatech.edu/~tzhao80/)
+
+Powered by [arXiv.com](https://www.arxiv.org/), [Sematic Scholar](https://www.semanticscholar.org/)
 
 **Partnership**
 

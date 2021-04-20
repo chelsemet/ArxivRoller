@@ -3,6 +3,29 @@
 {% block css %} 
 {{ block.super }}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/bumbeishvili/d3-tip-for-v6@4/d3-tip.min.css">
+<style>
+    .hover path {
+        stroke: #ccc;
+    }
+
+    .hover text {
+        fill: #ccc;
+    }
+
+    .hover g.primary text {
+        fill: black;
+        font-weight: bold;
+    }
+
+    .hover g.secondary text {
+        fill: #333;
+    }
+
+    .hover path.primary {
+        stroke: #333;
+        stroke-opacity: 1;
+    }
+</style>
 {% endblock %}
 
 {% block extend_menu_front %} 
@@ -122,13 +145,14 @@ function build(data){
     for (var l of links) {
         l['source_id'] = nodeId2listId[l['source']];
         l['target_id'] = nodeId2listId[l['target']];
-    } 
+    }
 
-    var heightPerPaper = 30;
+    var heightPerPaper = 60;
     var nNodes = nodes.length;
-    var margin = {top: 10, right: 30, bottom: 30, left: 40},
+    var margin = {top: 40, right: 30, bottom: 30, left: 10},
     width = 1000 - margin.left - margin.right,
-    height = (nNodes*heightPerPaper + 500) - margin.top - margin.bottom;
+    height = (nNodes*heightPerPaper) - margin.top - margin.bottom;
+    var textWidth = 300;
 
     // append the svg object to the body of the page
     var svg = d3.select("#visCanvas")
@@ -144,14 +168,14 @@ function build(data){
     } 
     // console.log(nodes)
 
+	// enter code to define tooltip
+	var tool_tip = d3.tip().attr('class', 'd3-tip');
+	svg.call(tool_tip); 
+
     // yScale 
 	var yScale = d3.scaleLinear()
 	  .domain([0, nNodes])
 	  .range([0, height]);
-
-	// enter code to define tooltip
-	var tool_tip = d3.tip().attr('class', 'd3-tip');
-	svg.call(tool_tip); 
 
     // Draw Links
 	drawpaths();
@@ -164,11 +188,12 @@ function build(data){
 		  .enter()
 		  .append("path")
 		  .attr("render-order","-1")
-		  .attr('transform','translate(' +(margin.left + 170)+', 0)')
+		  .attr('transform','translate(' + textWidth +', 0)')
 		  .attr('d',function(d){
-			start = yScale(nodes[d.source_id].order)
-			end = yScale(nodes[d.target_id].order)
-			return ["M", margin.left, start,"A",(start - end)/2*4, ',',(start - end)/1.7, 0, 0, ',',start < end ? 1 : 0, 50, ',', end].join(' ');
+			y1 = yScale(nodes[d.source_id].order); 
+			y2 = yScale(nodes[d.target_id].order);
+            const r = Math.abs(y2 - y1) / 2;
+            return `M0,${y1}A${r},${r} 0,0,${y1 < y2 ? 1 : 0} 0,${y2}`;
 		  })
 		  .attr("fill", "none")
 		  .attr("stroke-opacity", 0.6)
@@ -185,11 +210,12 @@ function build(data){
 			.enter()
 			.append("path")
 			.attr("render-order","1")
-		    .attr('transform','translate(' +(margin.left + 170)+', 0)')
+		    .attr('transform','translate(' + textWidth + ', 0)')
 		    .attr('d',function(d){
-                start = yScale(nodes[d.source_id].order)
-                end = yScale(nodes[d.target_id].order)
-				return ["M", margin.left, start,"A",(start - end)/2*4, ',',(start - end)/1.7, 0, 0, ',',start < end ? 1 : 0, 50, ',', end].join(' ');
+                    y1 = yScale(nodes[d.source_id].order); 
+                    y2 = yScale(nodes[d.target_id].order);
+                    const r = Math.abs(y2 - y1) / 2;
+                    return `M0,${y1}A${r},${r} 0,0,${y1 < y2 ? 1 : 0} 0,${y2}`;
 				})
 			.attr("fill", "none")
 			.attr("stroke-opacity",function(b){if (b.source == d.id || b.target == d.id){return 1;} else {return 0.2;}})
@@ -199,16 +225,19 @@ function build(data){
     
 	var label = svg.selectAll("g")
         .data(nodes)
-        .enter()
-        .append("g")
-        .attr("font-family", "sans-serif")
-        .attr("font-size", 12)
-        .attr("text-anchor", "end");
+        .enter();
 		  
-    label.append("text")
-        .attr("x",margin.left+200)
-        .attr("y",function(d){return yScale(d.order);})
-        .text(function(d){return d.title.substring(0,30);})
+    label.append("foreignObject") // append div here-
+        .attr("x",0)
+        .attr("y",function(d){return yScale(d.order)-(heightPerPaper-10)/2;})
+        .attr("width", textWidth-10)
+        .attr("height", heightPerPaper-10)
+        .each(function(d) { // i dont know why, but html function does not helps, i used each over all nodes here
+            d3.select(this).html(
+                `<button class="btn btn-outline-primary" style="font-size: 0.6rem;width: 100%;height: 100%;">
+                    ${d.title}
+                </button>`)
+        })
         .on("mouseover", function(event, d){
             hover_event(d); 
             tool_tip.html("Title: " + d.title );
@@ -221,8 +250,8 @@ function build(data){
         .on("mouseout.path", function(d){drawpaths();})
         .on("mouseout.tip", tool_tip.hide);
             
-    label.append("circle")
-        .attr("cx",margin.left+220)
+    label.append("g").append("circle")
+        .attr("cx",textWidth)
         .attr("cy",function(d){return yScale(d.order);})
         .attr("r", 3);
     

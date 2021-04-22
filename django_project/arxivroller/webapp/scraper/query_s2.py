@@ -22,9 +22,10 @@ PAGE_ROOT_URL="https://api.semanticscholar.org/"
 def query_page_s2(paper_id, try_get_pdf=True):
     if S2_KEY is None:
         response = requests.get(ROOT_URL + paper_id)
+        time.sleep(0.1)
     else:
         response = requests.get(ROOT_URL + paper_id, headers={'x-api-key': S2_KEY})
-    time.sleep(1.0/100)
+        time.sleep(1.0/100)
     # print(ROOT_URL + paper_id)
     api_data = response.json()
     # print(api_data)

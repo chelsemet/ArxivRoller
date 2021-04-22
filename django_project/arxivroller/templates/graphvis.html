@@ -56,13 +56,37 @@
                 <div class="card-body">                
                     <h5 class="card-title fw-bold"> Control Panel</h5>
                     
-                    <form>
-                        
-                        <label for="weightThreshold" class="form-label">Link Weight Threshold: </label>
-                        <output id="weightThresholdOut" name="weightThresholdOut" for="weightThreshold" >80</output> %
-                        <input type="range" class="form-range" min="0" max="100" step="1" value="80" id="weightThreshold" oninput="weightThresholdOut.value=weightThreshold.value">
-    
-                        <a href="#" class="btn btn-primary">Refresh Graph</a>
+                    <form >
+
+                        <h6 class="fw-bold"> Metric Weight</h6>
+                        <div class="row">
+                            <div class="col">
+                            <label for="citation_path_weight" class="form-label">Citation Path</label>
+                            <input type="number" class="form-control" id="citation_path_weight" name="citation_path_weight" min="0" value="1" step="0.01">
+                            </div>
+                            <div class="col">
+                            <label for="reference_overlap_weight" class="form-label">Reference Overlap</label>
+                            <input type="number" class="form-control" id="reference_overlap_weight" name="reference_overlap_weight" min="0" value="0.1" step="0.01">
+                            </div>
+                            <div class="col">
+                            <label for="lda_topic_weight" class="form-label">LDA Topic Similarity</label>
+                            <input type="number" class="form-control" id="lda_topic_weight" name="lda_topic_weight" min="0" value="0.1" step="0.01">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                            <label for="rake_keyword_overlap_weight" class="form-label">Keyword Overlap</label>
+                            <input type="number" class="form-control" id="rake_keyword_overlap_weight" name="rake_keyword_overlap_weight" min="0" value="0.3" step="0.01">
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                        <label for="weightThreshold" class="form-label ">Link Weight Threshold: </label>
+                        <output id="weightThresholdOut" name="weightThresholdOut" for="weightThreshold" >0</output>
+                        <input type="range" class="form-range" min="0" max="1" step="0.01" value="0" data-maxscore="1" id="weightThreshold">
+                        </div>
+
+                        <button class="btn btn-primary" type="button" id="refeshBtn">Refresh Graph</button>
                         
                     </form>
                 </div>
@@ -70,8 +94,17 @@
         </div>
         <div class="col-md-8 px-0">
             <div class="card my-2 mx-1">
+                <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                    <div class="container-fluid">
+                        <span class="fs-5 fw-bold">Visualization</span>
+                        <button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#compareDetail" id="compareDetailBtn">Show Comparison Details</button>
+
+                    </div>
+                </nav>
                 <div class="card-body">                
-                    <h5 class="card-title fw-bold">Visualization</h5>
+                    
+
+                    <!-- <button class="btn btn-outline-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasWithBothOptions"></button>  -->
                     <div class="spinner-border text-primary" role="status" id="loadingSpin">
                         <span class="visually-hidden">Loading...</span>
                     </div>
@@ -83,6 +116,17 @@
         </div>
     </div>
 </div>
+<div class="offcanvas offcanvas-start" data-bs-scroll="true" tabindex="-1" id="compareDetail" style="width: 60%;">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title">Show Comparison Details</h5>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body" id="compareDetailContent">
+        <p>Please Select Papers</p>
+    </div>
+</div>
+
+
 {% endblock %}
 
 {% block js %} 
@@ -97,6 +141,11 @@ const requestGET = JSON.parse(document.getElementById('requestGET').textContent)
 const maxReturns = 20
 // console.log(requestGET)
 var loadingSpin = $("#loadingSpin");
+var offcanvasElementList = [].slice.call(document.querySelectorAll('.offcanvas'))
+var offcanvasList = offcanvasElementList.map(function (offcanvasEl) {
+  return new bootstrap.Offcanvas(offcanvasEl)
+})
+// console.log(offcanvasList)
 
 // Setup Basic Info
 var basicInfoList = $("#basicInfoList");
@@ -119,22 +168,207 @@ basicInfoList.append(`<dd class="col-sm-9 text-muted">${maxReturns}</dd>`)
 
 
 // Control Panel Setting
+var activeNodes = [];
+var data = null;
+function setupControlPanel(){
+    $("#refeshBtn").click(build);
 
+    $("#citation_path_weight").on("change", build)
+    $("#reference_overlap_weight").on("change", build)
+    $("#lda_topic_weight").on("change", build)
+    $("#rake_keyword_overlap_weight").on("change", build)
+
+    $("#weightThresholdOut").val(($("#weightThreshold").data("maxscore")*$("#weightThreshold").val()).toFixed(4))
+    $("#weightThreshold").on("input", function() {
+        $("#weightThresholdOut").val(($("#weightThreshold").data("maxscore")*$("#weightThreshold").val()).toFixed(4));
+        build();
+    })
+}
+var compareDetailContent=$('#compareDetailContent');
+function updateCompareDetails(){
+    if (activeNodes.length == 0){
+        compareDetailContent.html(`<p>Please Select Papers.</p>`)
+    }
+    if (activeNodes.length == 1){
+        var paper1 = activeNodes[0];
+        compareDetailContent.html(`
+        <div class="row card-group">
+                <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">${paper1.title} <a type="button" class="btn btn-outline-primary px-1 py-0 me-1 mt-0 border-0" href="${window.location.origin + "/?searchOption=arxivID&mainText=" +paper1.arxiv_id}"><i class="fas fa-external-link-alt"></i></a></h5>
+                    <h6 class="card-subtitle mb-2 text-muted">${paper1.authors.map(x => `<a href="${window.location.origin + "/?searchOption=author&mainText=" +x}"> ${x}</a>`).join(", ")}</h6>
+                    <h6 class="card-subtitle mb-2 text-muted"> 
+                        ${(paper1.comment ? paper1.comment  + " " : "" )} 
+                        <span class="fw-lighter">${paper1.updated}</span>
+                    </h6>
+                    <p class="card-text">${paper1.summary}</p>
+                </div>
+                </div>
+                <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Select Another Paper</h5>
+                </div>
+                </div>
+        </div>
+        `)
+    }
+    if (activeNodes.length == 2){
+        var paper1 = activeNodes[0];
+        var paper2 = activeNodes[1];
+        var link = null;
+        for (l of data.links){
+            if ((l.source == paper1.id && l.target == paper2.id) || (l.source == paper2.id && l.target == paper1.id)){
+                link = l;
+                break;
+            }
+        }
+        var scoreHtml = `
+            <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Paper 1</h5>
+                <h6 class="card-subtitle mb-2 text-muted">${paper1.title} <a type="button" class="btn btn-outline-primary px-1 py-0 me-1 mt-0 border-0" href="${window.location.origin + "/?searchOption=arxivID&mainText=" +paper1.arxiv_id}"><i class="fas fa-external-link-alt"></i></a></h6>
+                <h5 class="card-title">Paper 2</h5>
+                <h6 class="card-subtitle mb-2 text-muted">${paper2.title} <a type="button" class="btn btn-outline-primary px-1 py-0 me-1 mt-0 border-0" href="${window.location.origin + "/?searchOption=arxivID&mainText=" +paper2.arxiv_id}"><i class="fas fa-external-link-alt"></i></a></h6>
+                <h5 class="card-title mb-5">Overall Score: ${link['overall_score']}</h5>
+
+
+                <h5 class="card-title mt-3">Score Breakdown</h5>
+                <dl class="row">
+                <dt class="col-sm-3">Citation Path Score: ${link['citation_path_score']}</dt>
+                <dd class="col-sm-9">1: Direct Citation; 0.5: Path length <= 2; 0: Path length > 2.</dd>
+                <dt class="col-sm-3">Reference Overlap Score: ${link['reference_overlap_score']}</dt>
+                <dd class="col-sm-9">Number of overlapped references.</dd>
+                <dt class="col-sm-3">LDA Topic Score: ${link['lda_topic_score']}</dt>
+                <dd class="col-sm-9">(1-JSD) between topic distributions.</dd>
+                <dt class="col-sm-3">Keyword Overlap Score: ${link['rake_keyword_overlap_score']}</dt>
+                <dd class="col-sm-9">Number of overlapped references extracted by <a href="https://github.com/aneesha/RAKE" target="_blank">Rake Algorithm</a>.</dd>
+                </dl>
+            </div>
+            </div>
+        `
+        var summaryHtml = `
+        <div class="row card-group">
+                <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">${paper1.title}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">${paper1.authors.map(x => `<a href="${window.location.origin + "/?searchOption=author&mainText=" +x}"> ${x}</a>`).join(", ")}</h6>
+                    <h6 class="card-subtitle mb-2 text-muted"> 
+                        ${(paper1.comment ? paper1.comment  + " " : "" )} 
+                        <span class="fw-lighter">${paper1.updated}</span>
+                    </h6>
+                    <p class="card-text">${paper1.summary}</p>
+                </div>
+                </div>
+                <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">${paper2.title}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">${paper2.authors.map(x => `<a href="${window.location.origin + "/?searchOption=author&mainText=" +x}"> ${x}</a>`).join(", ")}</h6>
+                    <h6 class="card-subtitle mb-2 text-muted"> 
+                        ${(paper2.comment ? paper2.comment  + " " : "" )} 
+                        <span class="fw-lighter">${paper2.updated}</span>
+                    </h6>
+                    <p class="card-text">${paper2.summary}</p>
+                </div>
+                </div>
+        </div>
+        `
+        var ldaHtml = `
+        <div class="row card-group">
+                <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">${paper1.title}</h5>
+                </div>
+                </div>
+                <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">${paper2.title}</h5>
+                </div>
+                </div>
+        </div>
+        `
+        var keyword1 = new Set(paper1.rake_keywords);
+        var keyword2 = new Set(paper2.rake_keywords);
+        var commonKeywords = new Set([...keyword1].filter(i => keyword2.has(i)));
+        keyword1 = new Set([...keyword1].filter(i => !commonKeywords.has(i)))
+        keyword2 = new Set([...keyword2].filter(i => !commonKeywords.has(i)))
+        var highlightTitle1 = paper1.title;
+        var highlightSummary1 = paper1.summary;
+        var highlightTitle2 = paper2.title;
+        var highlightSummary2 = paper2.summary;
+
+        for (var k of keyword1){
+            highlightTitle1 = highlightTitle1.replace(RegExp('('+k+')', 'gi'), '<span class="bg-warning text-dark">$1</span>')
+            highlightSummary1 = highlightSummary1.replace(RegExp('('+k+')', 'gi'), '<span class="bg-warning text-dark">$1</span>')
+        }
+        for (var k of keyword2){
+            highlightTitle2 = highlightTitle2.replace(RegExp('('+k+')', 'gi'), '<span class="bg-warning text-dark">$1</span>')
+            highlightSummary2 = highlightSummary2.replace(RegExp('('+k+')', 'gi'), '<span class="bg-warning text-dark">$1</span>')
+        }
+        for (var k of commonKeywords){
+            highlightTitle1 = highlightTitle1.replace(RegExp('('+k+')', 'gi'), '<span class="bg-primary text-white">$1</span>')
+            highlightSummary1 = highlightSummary1.replace(RegExp('('+k+')', 'gi'), '<span class="bg-primary text-white">$1</span>')
+            highlightTitle2 = highlightTitle2.replace(RegExp('('+k+')', 'gi'), '<span class="bg-primary text-white">$1</span>')
+            highlightSummary2 = highlightSummary2.replace(RegExp('('+k+')', 'gi'), '<span class="bg-primary text-white">$1</span>')
+        }
+
+
+        var keywordHtml = `
+        <span class="bg-warning text-dark">Keywords</span> <span class="bg-primary text-white">Common Keywords</span>
+        <div class="row card-group">
+                <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">${highlightTitle1}</h5>
+                    <p class="card-text">${highlightSummary1}</p>
+                </div>
+                </div>
+                <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">${highlightTitle2}</h5>
+                    <p class="card-text">${highlightSummary2}</p>
+                </div>
+                </div>
+        </div>
+        `
+        compareDetailContent.html(`
+        <nav>
+        <div class="nav nav-tabs" id="nav-tab" role="tablist">
+            <button class="nav-link active" id="nav-compare-detail-score-tab" data-bs-toggle="tab" data-bs-target="#nav-compare-detail-score" type="button" role="tab">Score</button>
+            <button class="nav-link" id="nav-compare-detail-summary-tab" data-bs-toggle="tab" data-bs-target="#nav-compare-detail-summary" type="button" role="tab">Paper Summary</button>
+            <!-- <button class="nav-link" id="nav-compare-detail-lda-tab" data-bs-toggle="tab" data-bs-target="#nav-compare-detail-lda" type="button" role="tab">LDA Results</button> -->
+            <button class="nav-link" id="nav-compare-detail-keyword-tab" data-bs-toggle="tab" data-bs-target="#nav-compare-detail-keyword" type="button" role="tab">Keywords</button>
+        </div>
+        </nav>
+        <div class="tab-content" id="nav-tabContent">
+            <div class="tab-pane fade show active" id="nav-compare-detail-score" role="tabpanel">${scoreHtml}</div>
+            <div class="tab-pane fade" id="nav-compare-detail-summary" role="tabpanel">${summaryHtml}</div>
+            <!-- <div class="tab-pane fade" id="nav-compare-detail-lda" role="tabpanel">${ldaHtml}</div> -->
+            <div class="tab-pane fade" id="nav-compare-detail-keyword" role="tabpanel">${keywordHtml}</div>
+        </div>
+        `)
+    }
+}
+$("#compareDetailBtn").click(updateCompareDetails)
 
 // Function for building visualization
-function build(data){
+function build(){
+    if (data == null)
+        return false;
     loadingSpin.addClass('d-none')
     var links = data.links;
     // Format links
-    for (var l of links) {
-        l['reference_overlap_score'] = l['reference_overlap_score']*0.1;
-        l['citation_path_score'] = l['citation_path_score']*1;
-        
-        l['overall_score'] = l['reference_overlap_score']+l['citation_path_score']
+    for (var l of links) {        
+        l['overall_score'] = (
+            l['reference_overlap_score']*$("#reference_overlap_weight").val()
+            +l['citation_path_score']*$("#citation_path_weight").val()
+            +l['lda_topic_score']*$("#lda_topic_weight").val()
+            +l['rake_keyword_overlap_score']*$("#rake_keyword_overlap_weight").val()
+        ).toFixed(4);
     } 
     links.sort((p1,p2) => p1['overall_score'] < p2['overall_score'])
-    links = links.filter(l => l['overall_score']>0)
-
+    var maxscore = data.links.reduce((l1, l2) => (l1.overall_score > l2.overall_score) ? l1 : l2).overall_score;
+    $("#weightThreshold").data("maxscore", maxscore)
+    $("#weightThresholdOut").val(($("#weightThreshold").data("maxscore")*$("#weightThreshold").val()).toFixed(4));
+    links = links.filter(l => l['overall_score']>0 && l['overall_score']>=maxscore*$("#weightThreshold").val())
 
     var nodes = data.nodes;
     var nodeId2listId = {}
@@ -155,6 +389,7 @@ function build(data){
     var textWidth = 300;
 
     // append the svg object to the body of the page
+    d3.selectAll("svg").remove();
     var svg = d3.select("#visCanvas")
         .append("svg")
         .attr("viewBox", `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
@@ -176,13 +411,21 @@ function build(data){
 	var yScale = d3.scaleLinear()
 	  .domain([0, nNodes])
 	  .range([0, height]);
-
-    // Draw Links
-	drawpaths();
 	
-	function drawpaths(){
+    // Draw Links
+	function drawpaths(selectedNodes = null){
 		svg.selectAll("path").remove();
 		
+        function isSelectLink(d){
+            if (selectedNodes == null || selectedNodes.length==0){
+                return false;
+            }
+            for (var p of selectedNodes){
+                if (p.id != d.source && p.id != d.target)
+                    return false;
+            }
+            return true;
+        } 
 		var path = svg.selectAll("path")
 		  .data(links)
 		  .enter()
@@ -195,66 +438,105 @@ function build(data){
             const r = Math.abs(y2 - y1) / 2;
             return `M0,${y1}A${r},${r} 0,0,${y1 < y2 ? 1 : 0} 0,${y2}`;
 		  })
-		  .attr("fill", "none")
-		  .attr("stroke-opacity", 0.6)
-		  .attr("stroke-width", 1.5)
-		  .attr("stroke", "black");
+		  .attr("fill", "none");
+
+        if(selectedNodes == null || selectedNodes.length==0){
+            path.attr("stroke-opacity", 0.6)
+                .attr("stroke-width", function(d){return 4.5*d.overall_score/maxscore})
+                .attr("stroke", "black");
+        }
+        else{
+			path.attr("stroke-opacity",function(d){if (isSelectLink(d)){return 1;} else {return 0.2;}})
+                .attr("stroke-width",function(d){if (isSelectLink(d)){return 6*d.overall_score/maxscore;} else {return 4.5*d.overall_score/maxscore;}})
+                .attr("stroke", function(d){if (isSelectLink(d)){return "purple";} else {return "gray";}});
+        }
 	};
 
-    
-	function hover_event(d){
-		svg.selectAll("path").remove();
-		
-		svg.selectAll("path")
-			.data(links)
-			.enter()
-			.append("path")
-			.attr("render-order","1")
-		    .attr('transform','translate(' + textWidth + ', 0)')
-		    .attr('d',function(d){
-                    y1 = yScale(nodes[d.source_id].order); 
-                    y2 = yScale(nodes[d.target_id].order);
-                    const r = Math.abs(y2 - y1) / 2;
-                    return `M0,${y1}A${r},${r} 0,0,${y1 < y2 ? 1 : 0} 0,${y2}`;
-				})
-			.attr("fill", "none")
-			.attr("stroke-opacity",function(b){if (b.source == d.id || b.target == d.id){return 1;} else {return 0.2;}})
-			.attr("stroke-width",function(b){if (b.source == d.id || b.target == d.id){return 2;} else {return 1.5;}})
-			.attr("stroke", function(b){if (b.source == d.id || b.target == d.id){return "purple";} else {return "gray";}});
-	};	
-    
-	var label = svg.selectAll("g")
-        .data(nodes)
-        .enter();
-		  
-    label.append("foreignObject") // append div here-
-        .attr("x",0)
-        .attr("y",function(d){return yScale(d.order)-(heightPerPaper-10)/2;})
-        .attr("width", textWidth-10)
-        .attr("height", heightPerPaper-10)
-        .each(function(d) { // i dont know why, but html function does not helps, i used each over all nodes here
-            d3.select(this).html(
-                `<button class="btn btn-outline-primary" style="font-size: 0.6rem;width: 100%;height: 100%;">
-                    ${d.title}
-                </button>`)
-        })
-        .on("mouseover", function(event, d){
-            hover_event(d); 
-            tool_tip.html("Title: " + d.title );
-            var x = event.x,
-                y = event.y;
-            tool_tip.show(event,this);
-            tool_tip.style('top', y);
-            tool_tip.style('left', x);
-        })
-        .on("mouseout.path", function(d){drawpaths();})
-        .on("mouseout.tip", tool_tip.hide);
-            
-    label.append("g").append("circle")
-        .attr("cx",textWidth)
-        .attr("cy",function(d){return yScale(d.order);})
-        .attr("r", 3);
-    
+	function drawnodes(){
+		svg.selectAll(".paperNode").remove();
+        var label = svg.selectAll("g")
+            .data(nodes)
+            .enter()
+            .append("g")
+            .classed('paperNode',true);
+        
+        function isactiveNodes(d){
+            for (var p of activeNodes){
+                if (p.id == d.id)
+                    return true;
+            }
+            return false;
+        }
+        label.append("foreignObject") // append div here-
+            .attr("x",0)
+            .attr("y",function(d){return yScale(d.order)-(heightPerPaper-10)/2;})
+            .attr("width", textWidth-10)
+            .attr("height", heightPerPaper-10)
+            .each(function(d) { // i dont know why, but html function does not helps, i used each over all nodes here
+                if (isactiveNodes(d)){
+                    d3.select(this).html(
+                        `<button class="btn btn-outline-primary active" style="font-size: 0.6rem;width: 100%;height: 100%;">
+                            ${d.title}
+                        </button>`)
+                } else {
+                    d3.select(this).html(
+                        `<button class="btn btn-outline-primary" style="font-size: 0.6rem;width: 100%;height: 100%;">
+                            ${d.title}
+                        </button>`)
+                }
+            })
+            .on("mouseover", function(event, d){
+                if (activeNodes.length==2)
+                    drawpaths(selectedNodes=[activeNodes[1], d]);
+                else 
+                    drawpaths(selectedNodes=activeNodes.concat([d]));
+
+                // drawnodes(selectedNodes=selectedNodes);
+                tool_tip.html("Title: " + d.title );
+                var x = event.x,
+                    y = event.y;
+                tool_tip.show(event,this);
+                tool_tip.style('top', y);
+                tool_tip.style('left', x);
+            })
+            .on("mouseout.path", function(event, d){
+                // console.log("++++++++++++",selectedNodes)
+                drawpaths(selectedNodes=activeNodes);
+            })
+            .on("mouseout.tip", tool_tip.hide)
+            .on("click", function(event, d){
+                // alert('selected');
+                if (activeNodes.length==2 && activeNodes[1].id==d.id)
+                    activeNodes.splice(1, 1)
+                else if (activeNodes.length>=1 && activeNodes[0].id==d.id)
+                    activeNodes.splice(0, 1)
+                else {
+                    if (activeNodes.length==2)
+                        activeNodes.shift();
+                    activeNodes.push(d);
+                    $("#compareDetailBtn").click();
+                    event.stopPropagation();
+                }
+                build();
+            });
+                
+        label.append("g").append("circle")
+            .attr("cx",textWidth)
+            .attr("cy",function(d){return yScale(d.order);})
+            .attr("r", 3)
+		    .attr("fill", function(d){
+                if (isactiveNodes(d))
+                    return "purple";
+                else
+                    return "gray";
+            });
+    };
+
+    function draw(selectedNodes){
+        drawpaths(selectedNodes=activeNodes);
+        drawnodes();
+    };
+    draw(selectedNodes = activeNodes);
 }
 $.get(
     window.location.origin + 
@@ -264,9 +546,11 @@ $.get(
     "&&max_returns=" + maxReturns +
     "&&format=json",
     requestGET,
-    function(data){
-        // console.log(data);
-        build(data);
+    function(d){
+        data = d;
+        console.log(data);
+        build();
+        setupControlPanel();
     }
 )
 </script>

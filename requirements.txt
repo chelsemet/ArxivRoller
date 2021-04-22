@@ -18,3 +18,5 @@ markdown
 daphne
 psycopg2-binary
 tqdm
+gensim
+nltk

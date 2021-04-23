@@ -9,6 +9,13 @@ import math
 from scipy.spatial import distance
 from .rake import Rake
 
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+import torch
+
+NLI_MODEL = AutoModelForSequenceClassification.from_pretrained('cross-encoder/stsb-TinyBERT-L-4')
+NLI_TOKENIZER = AutoTokenizer.from_pretrained('cross-encoder/stsb-TinyBERT-L-4')
+NLI_MODEL.eval()
+
 NUM_TOPICS=10
 
 class GraphVisPaperViewSet(PaperViewSet):
@@ -32,7 +39,9 @@ class GraphVisPaperViewSet(PaperViewSet):
         keywords = Rake().get_keywords_of_topic_abstracts([(p['title']+' '+p['summary']).replace('\n', ' ')  for p in list_of_paper])
         for p,kw in zip(list_of_paper,keywords):
             p['rake_keywords'] = [s.replace('  ', ' ') for s in kw[1]]
-            print(p['rake_keywords'])
+            # print(p['rake_keywords'])
+
+        # NLI
 
         # define distance functions
         def refOverlap(p1, p2):
@@ -57,6 +66,14 @@ class GraphVisPaperViewSet(PaperViewSet):
                 t2[i] = s
             jsd = distance.jensenshannon(t1, t2, 2.0)
             return round(1-min(1,max(0,jsd)),4)
+        def nliScore(p1, p2):
+            features = NLI_TOKENIZER([[p1['title']+' '+p1['summary'], p2['title']+' '+p2['summary']]],  padding=True, truncation=True, return_tensors="pt")
+            # with torch.no_grad():
+            input_ids, token_type_ids, attention_mask = features['input_ids'],features['token_type_ids'],features['attention_mask']
+            inputs_embeds = NLI_MODEL.bert.embeddings.word_embeddings(input_ids)
+            # print(features.keys())
+            scores = NLI_MODEL(inputs_embeds=inputs_embeds,token_type_ids=token_type_ids,attention_mask=attention_mask).logits[0]
+            return max(min(1, scores.item()*0.5+0.5), 0)
 
         # Get links
         paper_relevence = []
@@ -70,7 +87,7 @@ class GraphVisPaperViewSet(PaperViewSet):
                 rel['citation_path_score'], rel['reference_overlap_score'] = citationPath(list_of_paper[i], list_of_paper[j])
                 rel['lda_topic_score'] = ldaScore(list_of_paper[i], list_of_paper[j])
                 rel['rake_keyword_overlap_score'] = rakeKeywordOverlap(list_of_paper[i], list_of_paper[j])
-
+                rel['nli_score'] = nliScore(list_of_paper[i], list_of_paper[j])
                 paper_relevence.append(rel)
                 # print(rel['reference_overlap_score'], rel['citation_path_score'])
 

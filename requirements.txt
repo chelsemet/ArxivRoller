@@ -20,3 +20,6 @@ psycopg2-binary
 tqdm
 gensim
 nltk
+transformers==4.5.1
+-f https://download.pytorch.org/whl/torch_stable.html
+torch==1.8.1+cpu

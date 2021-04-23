@@ -56,27 +56,31 @@
                 <div class="card-body">                
                     <h5 class="card-title fw-bold"> Control Panel</h5>
                     
-                    <form >
+                    <form id="controlPanel">
 
                         <h6 class="fw-bold"> Metric Weight</h6>
                         <div class="row">
                             <div class="col">
                             <label for="citation_path_weight" class="form-label">Citation Path</label>
-                            <input type="number" class="form-control" id="citation_path_weight" name="citation_path_weight" min="0" value="1" step="0.01">
+                            <input type="number" class="form-control rebuild-graph" id="citation_path_weight" name="citation_path_weight" min="0" value="1" step="0.01">
                             </div>
                             <div class="col">
                             <label for="reference_overlap_weight" class="form-label">Reference Overlap</label>
-                            <input type="number" class="form-control" id="reference_overlap_weight" name="reference_overlap_weight" min="0" value="0.1" step="0.01">
+                            <input type="number" class="form-control rebuild-graph" id="reference_overlap_weight" name="reference_overlap_weight" min="0" value="0.1" step="0.01">
                             </div>
                             <div class="col">
                             <label for="lda_topic_weight" class="form-label">LDA Topic Similarity</label>
-                            <input type="number" class="form-control" id="lda_topic_weight" name="lda_topic_weight" min="0" value="0.1" step="0.01">
+                            <input type="number" class="form-control rebuild-graph" id="lda_topic_weight" name="lda_topic_weight" min="0" value="0.1" step="0.01">
                             </div>
                         </div>
                         <div class="row">
                             <div class="col">
                             <label for="rake_keyword_overlap_weight" class="form-label">Keyword Overlap</label>
-                            <input type="number" class="form-control" id="rake_keyword_overlap_weight" name="rake_keyword_overlap_weight" min="0" value="0.3" step="0.01">
+                            <input type="number" class="form-control rebuild-graph" id="rake_keyword_overlap_weight" name="rake_keyword_overlap_weight" min="0" value="0.3" step="0.01">
+                            </div>
+                            <div class="col">
+                            <label for="nli_weight" class="form-label">Semantic Similarity</label>
+                            <input type="number" class="form-control rebuild-graph" id="nli_weight" name="nli_weight" min="0" value="0.5" step="0.01">
                             </div>
                         </div>
 
@@ -173,10 +177,7 @@ var data = null;
 function setupControlPanel(){
     $("#refeshBtn").click(build);
 
-    $("#citation_path_weight").on("change", build)
-    $("#reference_overlap_weight").on("change", build)
-    $("#lda_topic_weight").on("change", build)
-    $("#rake_keyword_overlap_weight").on("change", build)
+    $("#controlPanel").find(".rebuild-graph").on("change", build)
 
     $("#weightThresholdOut").val(($("#weightThreshold").data("maxscore")*$("#weightThreshold").val()).toFixed(4))
     $("#weightThreshold").on("input", function() {
@@ -242,6 +243,8 @@ function updateCompareDetails(){
                 <dd class="col-sm-9">(1-JSD) between topic distributions.</dd>
                 <dt class="col-sm-3">Keyword Overlap Score: ${link['rake_keyword_overlap_score']}</dt>
                 <dd class="col-sm-9">Number of overlapped references extracted by <a href="https://github.com/aneesha/RAKE" target="_blank">Rake Algorithm</a>.</dd>
+                <dt class="col-sm-3">Semantic Score: ${link['nli_score']}</dt>
+                <dd class="col-sm-9">Semantic similarity obtained by a <a href="https://huggingface.co/cross-encoder/stsb-TinyBERT-L-4">TinyBERT</a> pre-trained on the STS benchmark dataset.</dd>
                 </dl>
             </div>
             </div>
@@ -362,6 +365,7 @@ function build(){
             +l['citation_path_score']*$("#citation_path_weight").val()
             +l['lda_topic_score']*$("#lda_topic_weight").val()
             +l['rake_keyword_overlap_score']*$("#rake_keyword_overlap_weight").val()
+            +l['nli_score']*$("#nli_weight").val()
         ).toFixed(4);
     } 
     links.sort((p1,p2) => p1['overall_score'] < p2['overall_score'])

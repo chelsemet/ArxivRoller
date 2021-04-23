@@ -46,6 +46,8 @@ class GraphVisPaperViewSet(PaperViewSet):
         # define distance functions
         def refOverlap(p1, p2):
             return len(set(p1['references']) & set(p2['references']))
+        def authorOverlap(p1, p2):
+            return len(set(p1['authors']) & set(p2['authors']))
         def rakeKeywordOverlap(p1, p2):
             return len(set(p1['rake_keywords']) & set(p2['rake_keywords']))
         def citationPath(p1, p2):
@@ -88,6 +90,7 @@ class GraphVisPaperViewSet(PaperViewSet):
                 rel['lda_topic_score'] = ldaScore(list_of_paper[i], list_of_paper[j])
                 rel['rake_keyword_overlap_score'] = rakeKeywordOverlap(list_of_paper[i], list_of_paper[j])
                 rel['nli_score'] = nliScore(list_of_paper[i], list_of_paper[j])
+                rel['author_overlap_score'] = authorOverlap(list_of_paper[i], list_of_paper[j])
                 paper_relevence.append(rel)
                 # print(rel['reference_overlap_score'], rel['citation_path_score'])
 

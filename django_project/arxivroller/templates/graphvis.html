@@ -75,6 +75,10 @@
                         </div>
                         <div class="row">
                             <div class="col">
+                            <label for="author_overlap_weight" class="form-label">Author Overlap</label>
+                            <input type="number" class="form-control rebuild-graph" id="author_overlap_weight" name="author_overlap_weight" min="0" value="0.5" step="0.01">
+                            </div>
+                            <div class="col">
                             <label for="rake_keyword_overlap_weight" class="form-label">Keyword Overlap</label>
                             <input type="number" class="form-control rebuild-graph" id="rake_keyword_overlap_weight" name="rake_keyword_overlap_weight" min="0" value="0.3" step="0.01">
                             </div>
@@ -140,9 +144,10 @@
 {{ request.GET |json_script:"requestGET" }}
 <script src="https://d3js.org/d3.v6.min.js"></script>
 <script src="https://unpkg.com/d3-v6-tip@1.0.6/build/d3-v6-tip.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/holtzy/D3-graph-gallery@master/LIB/d3.layout.cloud.js"></script>
 <script type="text/javascript">
 const requestGET = JSON.parse(document.getElementById('requestGET').textContent);
-const maxReturns = 20
+const maxReturns = 10;
 // console.log(requestGET)
 var loadingSpin = $("#loadingSpin");
 var offcanvasElementList = [].slice.call(document.querySelectorAll('.offcanvas'))
@@ -164,6 +169,10 @@ for (var [key, value] of Object.entries(requestGET)) {
     }
     if (key == "overlapTags")
         key = "Tags"
+    if (key == "bothtext")
+        key = "Search Text"
+    if (key == "searchEngine")
+        key = "Search Engine"
     basicInfoList.append(`<dt class="col-sm-3 text-muted">${key}</dt>`)
     basicInfoList.append(`<dd class="col-sm-9 text-muted">${value}</dd>`)
 }
@@ -241,6 +250,8 @@ function updateCompareDetails(){
                 <dd class="col-sm-9">Number of overlapped references.</dd>
                 <dt class="col-sm-3">LDA Topic Score: ${link['lda_topic_score']}</dt>
                 <dd class="col-sm-9">(1-JSD) between topic distributions.</dd>
+                <dt class="col-sm-3">Author Overlap Score: ${link['author_overlap_score']}</dt>
+                <dd class="col-sm-9">Number of authors who authoring both papers.</dd>
                 <dt class="col-sm-3">Keyword Overlap Score: ${link['rake_keyword_overlap_score']}</dt>
                 <dd class="col-sm-9">Number of overlapped references extracted by <a href="https://github.com/aneesha/RAKE" target="_blank">Rake Algorithm</a>.</dd>
                 <dt class="col-sm-3">Semantic Score: ${link['nli_score']}</dt>
@@ -249,12 +260,26 @@ function updateCompareDetails(){
             </div>
             </div>
         `
+        var author1 = new Set(paper1.authors);
+        var author2 = new Set(paper2.authors);
+        var author1html = paper1.authors.map(function(x){
+            if (author2.has(x))
+                return `<a class="bg-primary text-white" href="${window.location.origin + "/?searchOption=author&mainText=" +x}"> ${x}</a>`
+            else
+                return `<a href="${window.location.origin + "/?searchOption=author&mainText=" +x}"> ${x}</a>`
+        }).join(", ");
+        var author2html = paper2.authors.map(function(x){
+            if (author1.has(x))
+                return `<a class="bg-primary text-white" href="${window.location.origin + "/?searchOption=author&mainText=" +x}"> ${x}</a>`
+            else
+                return `<a href="${window.location.origin + "/?searchOption=author&mainText=" +x}"> ${x}</a>`
+        }).join(", ");
         var summaryHtml = `
         <div class="row card-group">
                 <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">${paper1.title}</h5>
-                    <h6 class="card-subtitle mb-2 text-muted">${paper1.authors.map(x => `<a href="${window.location.origin + "/?searchOption=author&mainText=" +x}"> ${x}</a>`).join(", ")}</h6>
+                    <h6 class="card-subtitle mb-2 text-muted">${author1html}</h6>
                     <h6 class="card-subtitle mb-2 text-muted"> 
                         ${(paper1.comment ? paper1.comment  + " " : "" )} 
                         <span class="fw-lighter">${paper1.updated}</span>
@@ -265,7 +290,7 @@ function updateCompareDetails(){
                 <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">${paper2.title}</h5>
-                    <h6 class="card-subtitle mb-2 text-muted">${paper2.authors.map(x => `<a href="${window.location.origin + "/?searchOption=author&mainText=" +x}"> ${x}</a>`).join(", ")}</h6>
+                    <h6 class="card-subtitle mb-2 text-muted">${author2html}</h6>
                     <h6 class="card-subtitle mb-2 text-muted"> 
                         ${(paper2.comment ? paper2.comment  + " " : "" )} 
                         <span class="fw-lighter">${paper2.updated}</span>
@@ -275,16 +300,28 @@ function updateCompareDetails(){
                 </div>
         </div>
         `
+        var ldaHtml1 = paper1.lda_topics.map(x => `
+        <h6 class="card-subtitle mb-2 text-muted">Topic ID: ${x[0]}</h6>
+        <h6 class="card-subtitle mb-2 text-muted">Propotion: ${x[1].toFixed(4)}</h6>
+        <div class="lda-topic${x[0]}-wordcloud"></div>
+        `).join(" ");
+        var ldaHtml2 = paper2.lda_topics.map(x => `
+        <h6 class="card-subtitle mb-2 text-muted">Topic ID: ${x[0]}</h6>
+        <h6 class="card-subtitle mb-2 text-muted">Propotion: ${x[1].toFixed(4)}</h6>
+        <div class="lda-topic${x[0]}-wordcloud"></div>
+        `).join(" ");
         var ldaHtml = `
         <div class="row card-group">
                 <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">${paper1.title}</h5>
+                    ${ldaHtml1}
                 </div>
                 </div>
                 <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">${paper2.title}</h5>
+                    ${ldaHtml2}
                 </div>
                 </div>
         </div>
@@ -337,22 +374,78 @@ function updateCompareDetails(){
         <div class="nav nav-tabs" id="nav-tab" role="tablist">
             <button class="nav-link active" id="nav-compare-detail-score-tab" data-bs-toggle="tab" data-bs-target="#nav-compare-detail-score" type="button" role="tab">Score</button>
             <button class="nav-link" id="nav-compare-detail-summary-tab" data-bs-toggle="tab" data-bs-target="#nav-compare-detail-summary" type="button" role="tab">Paper Summary</button>
-            <!-- <button class="nav-link" id="nav-compare-detail-lda-tab" data-bs-toggle="tab" data-bs-target="#nav-compare-detail-lda" type="button" role="tab">LDA Results</button> -->
+            <button class="nav-link" id="nav-compare-detail-lda-tab" data-bs-toggle="tab" data-bs-target="#nav-compare-detail-lda" type="button" role="tab">LDA Results</button>
             <button class="nav-link" id="nav-compare-detail-keyword-tab" data-bs-toggle="tab" data-bs-target="#nav-compare-detail-keyword" type="button" role="tab">Keywords</button>
         </div>
         </nav>
         <div class="tab-content" id="nav-tabContent">
             <div class="tab-pane fade show active" id="nav-compare-detail-score" role="tabpanel">${scoreHtml}</div>
             <div class="tab-pane fade" id="nav-compare-detail-summary" role="tabpanel">${summaryHtml}</div>
-            <!-- <div class="tab-pane fade" id="nav-compare-detail-lda" role="tabpanel">${ldaHtml}</div> -->
+            <div class="tab-pane fade" id="nav-compare-detail-lda" role="tabpanel">${ldaHtml}</div>
             <div class="tab-pane fade" id="nav-compare-detail-keyword" role="tabpanel">${keywordHtml}</div>
         </div>
         `)
+        
+        var allLDATopics = [];
+        for (var t of paper1.lda_topics)
+            allLDATopics.push(t[0]);
+        for (var t of paper2.lda_topics)
+            allLDATopics.push(t[0]);
+        allLDATopics = new Set(allLDATopics)
+        for (var t of allLDATopics)
+            drawLDAWordCloud(t);
     }
 }
 $("#compareDetailBtn").click(updateCompareDetails)
 
 // Function for building visualization
+function drawLDAWordCloud(topic_id, canvas=null){
+    // List of words
+    var myWords = data.lda_topics[topic_id]
+
+    // set the dimensions and margins of the graph
+    var margin = {top: 10, right: 10, bottom: 10, left: 10},
+        width = 450 - margin.left - margin.right,
+        height = 450 - margin.top - margin.bottom;
+
+    // append the svg object to the body of the page
+    if(canvas == null)
+        canvas = `.lda-topic${topic_id}-wordcloud`
+    // d3.select("#loadingSpin").append("svg")
+    var svg = d3.selectAll(canvas).append("svg")
+        .attr("viewBox", `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
+        .append("g")
+        .attr("transform","translate(" + margin.left + "," + margin.top + ")");
+
+    // Constructs a new cloud layout instance using d3 cloud layout
+    var layout = d3.layout.cloud()
+        .size([width, height])
+        .words(myWords.map(function(d) { return {text: d[1], size:d[0]*1500}; }))
+        .padding(5)        //space between words
+        .rotate(function() { return 0; })
+        .fontSize(function(d) { return d.size; })      // font size of words
+        .on("end", draw);
+    layout.start();
+
+    // This function draw the layout of previous part. The font size and opacity of the words are propotional to the size of the word which is provided. The words are shown in purple for the consistancy.
+    function draw(words) {
+        console.log(words)
+        svg.append("g")
+            .attr("transform", "translate(" + layout.size()[0] / 2 + "," + layout.size()[1] / 2 + ")")
+            .selectAll("text")
+                .data(words)
+            .enter().append("text")
+                .style("font-size", function(d) { return d.size; })
+                .style("fill", "purple")
+                .attr("opacity", function(d) {return d.size/100;})
+                .attr("text-anchor", "middle")
+                .style("font-family", "Impact")
+                .attr("transform", function(d) {
+                return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
+                })
+                .text(function(d) { return d.text; });
+    }
+}
 function build(){
     if (data == null)
         return false;
@@ -364,6 +457,7 @@ function build(){
             l['reference_overlap_score']*$("#reference_overlap_weight").val()
             +l['citation_path_score']*$("#citation_path_weight").val()
             +l['lda_topic_score']*$("#lda_topic_weight").val()
+            +l['author_overlap_score']*$("#author_overlap_weight").val()
             +l['rake_keyword_overlap_score']*$("#rake_keyword_overlap_weight").val()
             +l['nli_score']*$("#nli_weight").val()
         ).toFixed(4);
@@ -393,7 +487,7 @@ function build(){
     var textWidth = 300;
 
     // append the svg object to the body of the page
-    d3.selectAll("svg").remove();
+    d3.select("#visCanvas").html("");
     var svg = d3.select("#visCanvas")
         .append("svg")
         .attr("viewBox", `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
@@ -553,8 +647,8 @@ $.get(
     function(d){
         data = d;
         console.log(data);
-        build();
         setupControlPanel();
+        build();
     }
 )
 </script>

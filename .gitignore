@@ -2,6 +2,7 @@ db/
 db_backup/
 django_project/arxivroller/polls
 arxiv_snapshot/
+.vscode/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

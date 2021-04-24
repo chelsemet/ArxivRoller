@@ -147,7 +147,7 @@
 <script src="https://cdn.jsdelivr.net/gh/holtzy/D3-graph-gallery@master/LIB/d3.layout.cloud.js"></script>
 <script type="text/javascript">
 const requestGET = JSON.parse(document.getElementById('requestGET').textContent);
-const maxReturns = 10;
+const maxReturns = 20;
 // console.log(requestGET)
 var loadingSpin = $("#loadingSpin");
 var offcanvasElementList = [].slice.call(document.querySelectorAll('.offcanvas'))
@@ -251,11 +251,11 @@ function updateCompareDetails(){
                 <dt class="col-sm-3">LDA Topic Score: ${link['lda_topic_score']}</dt>
                 <dd class="col-sm-9">(1-JSD) between topic distributions.</dd>
                 <dt class="col-sm-3">Author Overlap Score: ${link['author_overlap_score']}</dt>
-                <dd class="col-sm-9">Number of authors who authoring both papers.</dd>
+                <dd class="col-sm-9">Number of authors who authored both papers.</dd>
                 <dt class="col-sm-3">Keyword Overlap Score: ${link['rake_keyword_overlap_score']}</dt>
-                <dd class="col-sm-9">Number of overlapped references extracted by <a href="https://github.com/aneesha/RAKE" target="_blank">Rake Algorithm</a>.</dd>
+                <dd class="col-sm-9">Number of overlapped keywords extracted by <a href="https://github.com/aneesha/RAKE" target="_blank">Rake Algorithm</a>.</dd>
                 <dt class="col-sm-3">Semantic Score: ${link['nli_score']}</dt>
-                <dd class="col-sm-9">Semantic similarity obtained by a <a href="https://huggingface.co/cross-encoder/stsb-TinyBERT-L-4">TinyBERT</a> pre-trained on the STS benchmark dataset.</dd>
+                <dd class="col-sm-9">Semantic similarity obtained by a <a href="https://huggingface.co/cross-encoder/stsb-TinyBERT-L-4" target="_blank">TinyBERT</a> pre-trained on the STS benchmark dataset.</dd>
                 </dl>
             </div>
             </div>
@@ -300,6 +300,34 @@ function updateCompareDetails(){
                 </div>
         </div>
         `
+        var referenceHtml = `
+        <div class="row card-group">
+                <div class="card">
+                <div class="card-body" >
+                    <h5 class="card-title">${paper1.title}</h5>
+                    <div id="referenceDetail1">
+                    <div class="spinner-border text-primary" role="status" id="loadingSpin">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    </div>
+                </div>
+                </div>
+                <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">${paper2.title}</h5>
+                    <div id="referenceDetail2">
+                    <div class="spinner-border text-primary" role="status" id="loadingSpin">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    </div>
+                </div>
+                </div>
+        </div>
+        `
+        
+
+
+
         var ldaHtml1 = paper1.lda_topics.map(x => `
         <h6 class="card-subtitle mb-2 text-muted">Topic ID: ${x[0]}</h6>
         <h6 class="card-subtitle mb-2 text-muted">Propotion: ${x[1].toFixed(4)}</h6>
@@ -374,6 +402,7 @@ function updateCompareDetails(){
         <div class="nav nav-tabs" id="nav-tab" role="tablist">
             <button class="nav-link active" id="nav-compare-detail-score-tab" data-bs-toggle="tab" data-bs-target="#nav-compare-detail-score" type="button" role="tab">Score</button>
             <button class="nav-link" id="nav-compare-detail-summary-tab" data-bs-toggle="tab" data-bs-target="#nav-compare-detail-summary" type="button" role="tab">Paper Summary</button>
+            <button class="nav-link" id="nav-compare-detail-reference-tab" data-bs-toggle="tab" data-bs-target="#nav-compare-detail-reference" type="button" role="tab">Reference</button>
             <button class="nav-link" id="nav-compare-detail-lda-tab" data-bs-toggle="tab" data-bs-target="#nav-compare-detail-lda" type="button" role="tab">LDA Results</button>
             <button class="nav-link" id="nav-compare-detail-keyword-tab" data-bs-toggle="tab" data-bs-target="#nav-compare-detail-keyword" type="button" role="tab">Keywords</button>
         </div>
@@ -381,19 +410,100 @@ function updateCompareDetails(){
         <div class="tab-content" id="nav-tabContent">
             <div class="tab-pane fade show active" id="nav-compare-detail-score" role="tabpanel">${scoreHtml}</div>
             <div class="tab-pane fade" id="nav-compare-detail-summary" role="tabpanel">${summaryHtml}</div>
+            <div class="tab-pane fade" id="nav-compare-detail-reference" role="tabpanel">${referenceHtml}</div>
             <div class="tab-pane fade" id="nav-compare-detail-lda" role="tabpanel">${ldaHtml}</div>
             <div class="tab-pane fade" id="nav-compare-detail-keyword" role="tabpanel">${keywordHtml}</div>
         </div>
         `)
         
         var allLDATopics = [];
-        for (var t of paper1.lda_topics)
-            allLDATopics.push(t[0]);
-        for (var t of paper2.lda_topics)
-            allLDATopics.push(t[0]);
+        for (var t of paper1.lda_topics){
+            allLDATopics.push(t[0]);}
+        for (var t of paper2.lda_topics){
+            allLDATopics.push(t[0]);}
         allLDATopics = new Set(allLDATopics)
-        for (var t of allLDATopics)
-            drawLDAWordCloud(t);
+        for (var t of allLDATopics){
+            drawLDAWordCloud(t);}
+        
+        
+        var s2id1 = `arXiv:${paper1.arxiv_id}`
+        if(paper1.arxiv_id.includes('s2:'))
+            s2id1 = paper1.arxiv_id.replace("s2:", "")
+        var s2id2 = `arXiv:${paper2.arxiv_id}`
+        if(paper2.arxiv_id.includes('s2:'))
+            s2id2 = paper2.arxiv_id.replace("s2:", "")
+        function createRefList(data, content, bgclass=""){
+            for(var i=0; i<data.length; i++){
+                var entry = data[i];
+                var badgeHtml = "";
+                var redirectHtml = "";
+                if (entry.arxivId != null){
+                    badgeHtml += `<a type="button" class="btn btn-outline-danger btn-xs" onclick="window.open('https://arxiv.org/abs/${entry.arxivId}');">arXiv</a> `
+                    badgeHtml += `<a type="button" class="btn btn-outline-primary btn-xs" onclick="window.open('https://arxiv.org/pdf/${entry.arxivId}.pdf');">PDF</a> `
+                    badgeHtml += `<a type="button" class="btn btn-outline-warning btn-xs" onclick="window.open('${entry.url}');">Semantic Scholar</a> `
+                    redirectHtml = `<a type="button" class="btn btn-outline-primary px-1 py-0 me-1 mt-0 border-0" href="${window.location.origin + "/?searchOption=arxivID&mainText=" +entry.arxivId}"><i class="fas fa-external-link-alt"></i></a>`
+                }
+                else if (entry.paperId != ""){
+                    badgeHtml += `<a type="button" class="btn btn-outline-warning btn-xs" onclick="window.open('${entry.url}');">Semantic Scholar</a> `
+                    redirectHtml = `<a type="button" class="btn btn-outline-primary px-1 py-0 me-1 mt-0 border-0" href="${window.location.origin + "/?mainText=" +encodeURIComponent(entry.title)}"><i class="fas fa-search"></i></a>`
+                    redirectHtml += `<a type="button" class="btn btn-outline-primary px-1 py-0 me-1 mt-0 border-0" href="${window.location.origin + "/?searchOption=s2ID&mainText=" +encodeURIComponent(entry.paperId)}"><i class="fas fa-download"></i></a>`
+                }
+                else {
+                    redirectHtml = `<a type="button" class="btn btn-outline-primary px-1 py-0 me-1 mt-0 border-0" href="${window.location.origin + "/?mainText=" +encodeURIComponent(entry.title)}"><i class="fas fa-search"></i></a>`
+                }
+                badgeHtml = `<h6 class="card-subtitle mb-2"> ${badgeHtml} </h6>`
+                var entryHtml = $($.parseHTML(`<div class="card ${bgclass}"><div class="card-body">
+                    <h6 class="card-title">${redirectHtml}${entry.title}</h5> 
+                    <h6 class="card-subtitle mb-2 text-muted"> 
+                        ${entry.authors.map(x => `<a href="${window.location.origin + "/?searchOption=author&mainText=" +x.name}"> ${x.name}</a>`).join(", ")} 
+                        <span class="fw-lighter">${entry.year}</span>
+                    </h6>
+                    ${badgeHtml}
+                    
+                </div></div>`));
+                entryHtml.appendTo(content);
+            }
+        }
+        $.ajax({
+            url: `https://api.semanticscholar.org/v1/paper/${s2id1}`,
+            type: 'GET',
+            cache: true,
+            timeout: 30000,
+            success: function(data1) {
+                $.ajax({
+                    url: `https://api.semanticscholar.org/v1/paper/${s2id2}`,
+                    type: 'GET',
+                    cache: true,
+                    timeout: 30000,
+                    success: function(data2) {
+                        var ref1 = data1.references;
+                        var ref2 = data2.references;
+                        var idList1 = ref1.map(x => x.paperId);
+                        var idList2 = ref2.map(x => x.paperId);
+                        var commonRef = ref1.filter(x => idList2.includes(x.paperId));
+                        ref1 = ref1.filter(x => !commonRef.map(x => x.paperId).includes(x.paperId));
+                        ref2 = ref2.filter(x => !commonRef.map(x => x.paperId).includes(x.paperId));
+                        
+                        $("#referenceDetail1").empty()
+                        $("#referenceDetail2").empty()
+                        createRefList(commonRef, $("#referenceDetail1"), bgclass="bg-info")
+                        createRefList(ref1, $("#referenceDetail1"))
+                        createRefList(commonRef, $("#referenceDetail2"), bgclass="bg-info")
+                        createRefList(ref2, $("#referenceDetail2"))
+                    },
+                    error: function(error) {
+                        console.log(error);
+                        console.log(`Loading from https://api.semanticscholar.org/v1/paper/${s2id2}. Failed. Error: ${error.responseText}`);
+                    },
+                    dataType: "json",
+                });
+            },
+            error: function(error) {
+                console.log(error);
+                console.log(`Loading from https://api.semanticscholar.org/v1/paper/${s2id1}. Failed. Error: ${error.responseText}`);
+            },
+            dataType: "json",
+        });
     }
 }
 $("#compareDetailBtn").click(updateCompareDetails)

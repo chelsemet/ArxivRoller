@@ -864,7 +864,7 @@ paperCards.on('click', '.list-group-item', function(event) {
             $.ajax({
                 url: `https://api.semanticscholar.org/v1/paper/${s2id}?include_unknown_references=true`,
                 type: 'GET',
-                cache: false,
+                cache: true,
                 timeout: 30000,
                 success: function(data) {
                     // console.log(detailViewerMain['summary'].filter('div.card-header'));
@@ -921,7 +921,7 @@ paperCards.on('click', '.list-group-item', function(event) {
                 },
                 error: function(error) {
                     console.log(error);
-                    console.log(`Loading from https://api.semanticscholar.org/v1/paper/arXiv:${activePaperData.arxiv_id}?include_unknown_references=true. Failed. Error: ${error.responseText}`);
+                    console.log(`Loading from https://api.semanticscholar.org/v1/paper/${s2id}?include_unknown_references=true. Failed. Error: ${error.responseText}`);
                 },
                 dataType: "json",
             });

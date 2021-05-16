@@ -26,7 +26,7 @@ with open(BASE_DIR / 'credential' / 'secret_key', 'r') as f:
     SECRET_KEY = f.read().strip()
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 if not DEBUG:
     ALLOWED_HOSTS = ['127.0.0.1',

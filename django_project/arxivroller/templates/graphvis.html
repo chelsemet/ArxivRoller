@@ -441,12 +441,12 @@ function updateCompareDetails(){
                     badgeHtml += `<a type="button" class="btn btn-outline-danger btn-xs" onclick="window.open('https://arxiv.org/abs/${entry.arxivId}');">arXiv</a> `
                     badgeHtml += `<a type="button" class="btn btn-outline-primary btn-xs" onclick="window.open('https://arxiv.org/pdf/${entry.arxivId}.pdf');">PDF</a> `
                     badgeHtml += `<a type="button" class="btn btn-outline-warning btn-xs" onclick="window.open('${entry.url}');">Semantic Scholar</a> `
-                    redirectHtml = `<a type="button" class="btn btn-outline-primary px-1 py-0 me-1 mt-0 border-0" href="${window.location.origin + "/?searchOption=arxivID&mainText=" +entry.arxivId}"><i class="fas fa-external-link-alt"></i></a>`
+                    redirectHtml = `<a type="button" class="btn btn-outline-primary px-1 py-0 me-1 mt-0 border-0" href="${window.location.origin + "/?searchOption=arxivID&mainText=" +entry.arxivId}" target="_blank"><i class="fas fa-external-link-alt"></i></a>`
                 }
                 else if (entry.paperId != ""){
                     badgeHtml += `<a type="button" class="btn btn-outline-warning btn-xs" onclick="window.open('${entry.url}');">Semantic Scholar</a> `
-                    redirectHtml = `<a type="button" class="btn btn-outline-primary px-1 py-0 me-1 mt-0 border-0" href="${window.location.origin + "/?mainText=" +encodeURIComponent(entry.title)}"><i class="fas fa-search"></i></a>`
-                    redirectHtml += `<a type="button" class="btn btn-outline-primary px-1 py-0 me-1 mt-0 border-0" href="${window.location.origin + "/?searchOption=s2ID&mainText=" +encodeURIComponent(entry.paperId)}"><i class="fas fa-download"></i></a>`
+                    redirectHtml = `<a type="button" class="btn btn-outline-primary px-1 py-0 me-1 mt-0 border-0" href="${window.location.origin + "/?mainText=" +encodeURIComponent(entry.title)}" target="_blank"><i class="fas fa-search"></i></a>`
+                    redirectHtml += `<a type="button" class="btn btn-outline-primary px-1 py-0 me-1 mt-0 border-0" href="${window.location.origin + "/?searchOption=s2ID&mainText=" +encodeURIComponent(entry.paperId)}" target="_blank"><i class="fas fa-download"></i></a>`
                 }
                 else {
                     redirectHtml = `<a type="button" class="btn btn-outline-primary px-1 py-0 me-1 mt-0 border-0" href="${window.location.origin + "/?mainText=" +encodeURIComponent(entry.title)}"><i class="fas fa-search"></i></a>`

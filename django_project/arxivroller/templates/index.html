@@ -243,7 +243,12 @@
     <header>
     <nav class="navbar px-2 py-1 navbar-expand-lg navbar-light bg-light border-bottom">
         <div class="container-fluid px-1">
-        <a href="/" class="navbar-brand">Paper List</a>
+            <div class=" d-flex flex-row ">
+                <a href="/" class="navbar-brand">Paper List</a>
+                <button class="btn btn-outline-dark py-0 border-0 active" type="button" id="paperCardStyleToggleBtn">
+                    <i class="bi bi-card-heading fs-4"></i>
+                </button>
+            </div>
         <div>
         <!-- <button type="button" class="btn btn-outline-primary pt-0" id="refreshBtn" title="Download Lastest Paper from arXiv.com"  style="border:none;" >
             <i class="bi bi-cloud-download fs-4"></i>
@@ -422,6 +427,7 @@ var majorQuery = {
 var startId = 0;
 var maxReturns = 20;
 var paperCards = $('#paperCards');
+var paperCardStyleToggleBtn = $('#paperCardStyleToggleBtn');
 var loadMore = $($.parseHTML(`<div class="list-group-item list-group-item-action p-0 card rounded-0">
     <div class="card-header rounded-0 border-0">
         <div class="text-center"> 
@@ -949,6 +955,27 @@ paperCards.on('click', '.paperCardBtn', function(event) {
         setPaperTags(paper, post=false)
 });
 
+// Paper Card Style
+function stylePaperCard(paper) {
+    var isDetailedView = paperCardStyleToggleBtn.hasClass("active");
+    if (isDetailedView){
+        paper.children().removeClass("d-none");
+        paper.children('.card-footer').addClass("d-none");
+    } 
+    else {
+        paper.children().addClass("d-none");
+        paper.children('.card-footer').removeClass("d-none");
+    }
+}
+paperCardStyleToggleBtn.click(function(event){
+    $(this).toggleClass('active');
+    for (const paper of paperCards.children()){
+        console.log($(paper))
+        console.log($(paper))
+        stylePaperCard($(paper))
+    }
+})
+
 // Refresh paper cards
 function getPaperQueryStr(){
     var subjectStr = ""; 
@@ -1053,7 +1080,7 @@ function loadPaperCards(empty = true){
                 // Set Up Paper Cards
                 var paper = $.parseHTML(`<div id="paperCard-${paper_details.arxiv_id}" class="paperCard list-group-item list-group-item-action p-0 mt-1 card rounded-0 border-bottom-0 callout-primary" >
                             <div class="card-header rounded-0 border-0  bg-transparent  mx-1 pe-1 ps-0 pt-2 pb-0">
-                                <div class="text-truncate" >  
+                                <div>  
                                     <h5 class="mb-1">${ paper_details.title }</h5> 
                                 </div>
                     
@@ -1078,6 +1105,9 @@ function loadPaperCards(empty = true){
                                     <i class="bi bi-bookmark-plus fs-5 p-0 m-0"  title="Edit Tags" data-bs-toggle="popover"></i>
                                 </a>
                             </div>
+                            <div class="card-footer p-1">
+                                ${ paper_details.title }
+                            </div>
                     </div>`);
                 // Attach paper details for easy use latter
                 $(paper).data("paper-details", paper_details);
@@ -1091,6 +1121,7 @@ function loadPaperCards(empty = true){
                 if (paper_details.user_paper.star_status)
                     starPaperStatus($(paper), post=false)
                 setPaperTags($(paper), post=false)
+                stylePaperCard($(paper))
                 
                 // console.log(i, paper_details.title)
             }

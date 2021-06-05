@@ -1,159 +1,200 @@
-{% extends "base.html" %}
+{% extends "accounts/account_base.html" %}
 
-{% block css %} 
-{{ block.super }}
-<style>
-body{
-color: #bcd0f7;
-    background: #1A233A;
-}
-.account-settings .user-profile {
-    margin: 0 0 1rem 0;
-    padding-bottom: 1rem;
-    text-align: center;
-}
-.account-settings .user-profile .user-avatar {
-    margin: 0 0 1rem 0;
-}
-.account-settings .user-profile .user-avatar img {
-    width: 90px;
-    height: 90px;
-    -webkit-border-radius: 100px;
-    -moz-border-radius: 100px;
-    border-radius: 100px;
-}
-.account-settings .user-profile h5.user-name {
-    margin: 0 0 0.5rem 0;
-}
-.account-settings .user-profile h6.user-email {
-    margin: 0;
-    font-size: 0.8rem;
-    font-weight: 400;
-}
-.account-settings .about {
-    margin: 1rem 0 0 0;
-    font-size: 0.8rem;
-    text-align: center;
-}
-.card {
-    background: #272E48;
-    -webkit-border-radius: 5px;
-    -moz-border-radius: 5px;
-    border-radius: 5px;
-    border: 0;
-    margin-bottom: 1rem;
-}
-.form-control {
-    border: 1px solid #596280;
-    -webkit-border-radius: 2px;
-    -moz-border-radius: 2px;
-    border-radius: 2px;
-    font-size: .825rem;
-    background: #1A233A;
-    color: #bcd0f7;
-}
-</style>
-{% endblock %}
+{% block profilecontent %}
 
-{% block content %}
-<div class="container mt-2 pt-2" id="profile-container">
+<div class="row pt-2">
 
-    <div class="row g-3">
-        <div class="col-xl-3 col-lg-3 col-md-12 col-sm-12 col-12">
-            <div class="card h-100">
-                <div class="card-body">
-                    <div class="account-settings pt-4">
-                        <div class="user-profile">
-                            <div class="user-avatar">
-                                <img src="https://bootdey.com/img/Content/avatar/avatar1.png" alt="Maxwell Admin">
-                            </div>
-                            <h5 class="user-name">{{user.get_username }}</h5>
-                            <h6 class="user-email">{{user.email }}</h6>
-                        </div>
-                        <div class="about">
-                            <h5 class="mb-2 text-light">Hello</h5>
-                            <p>This is your profile page.</p>
-                            <p>This page is under construction.</p>
-                        </div>
+    <!-- # Read Papers -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card callout-info shadow h-100 py-2 border border-info">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Reads</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="readPaperNum">0</div>
                     </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-9 col-lg-9 col-md-12 col-sm-12 col-12">
-            <div class="card h-100">
-                <div class="card-body">
-                    {% block profilecontent %}
-                    <ul class="nav nav-tabs">
-                        <li class="nav-item">
-                          <a class="nav-link active" href="#">Settings</a>
-                        </li>
-                        <li class="nav-item">
-                          <a class="nav-link text-light" href="{% url 'change_password' %}">Password</a>
-                        </li>
-                    </ul>
-
-                    <form method="post">{% csrf_token %}
-                    <div class="row g-2 py-3">
-                        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
-                            <h5 class="mb-3 text-light">Personal Details</h5>
-                        </div>
-                        <div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">
-                            <div class="form-group">
-                                <label for="username">User Name</label>
-                                <input type="text" class="form-control" name="username" id="username" placeholder="{{user.get_username}}" disabled>
-                            </div>
-                        </div>
-                        <div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">
-                            <div class="form-group">
-                                <label for="email">Email</label>
-                                <input type="email" class="form-control" name="email" id="email" placeholder="{{user.email}}">
-                            </div>
-                        </div>
+                    <div class="col-auto">
+                        <i class="bi bi-envelope-open-fill fa-2x text-gray-300"></i>
                     </div>
-                    <!-- <div class="row g-2 py-3">
-                        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
-                            <h5 class="mb-3 text-light">Preference</h5>
-                        </div>
-                        <div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">
-                            <div class="form-group">
-                                <label for="Street">Street</label>
-                                <input type="name" class="form-control" id="Street" placeholder="Enter Street">
-                            </div>
-                        </div>
-                        <div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">
-                            <div class="form-group">
-                                <label for="ciTy">City</label>
-                                <input type="name" class="form-control" id="ciTy" placeholder="Enter City">
-                            </div>
-                        </div>
-                        <div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">
-                            <div class="form-group">
-                                <label for="sTate">State</label>
-                                <input type="text" class="form-control" id="sTate" placeholder="Enter State">
-                            </div>
-                        </div>
-                        <div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">
-                            <div class="form-group">
-                                <label for="zIp">Zip Code</label>
-                                <input type="text" class="form-control" id="zIp" placeholder="Zip Code">
-                            </div>
-                        </div>
-                    </div> -->
-                    <div class="row g-2 py-3">
-                        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
-                            <div class="text-end">
-                                <button type="reset" id="reset" name="reset" class="btn btn-secondary">Cancel</button>
-                                <button type="submit" id="submit" name="submit" class="btn btn-primary">Update</button>
-                            </div>
-                        </div>
-                    </div>
-                    </form>
-                    {% endblock %}
                 </div>
             </div>
         </div>
     </div>
 
-    
+    <!-- Stared Papers -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card callout-warning shadow h-100 py-2 border border-warning">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Stars</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="starPaperNum">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-star-fill fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Archived Papers -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card callout-secondary shadow h-100 py-2 border border-secondary">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">Archive
+                        </div>
+                        <div class="row no-gutters align-items-center">
+                            <div class="col-auto">
+                                <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800" id="archivePaperNum">0</div>
+                            </div>
+                            <!-- <div class="col">
+                                <div class="progress progress-sm mr-2">
+                                    <div class="progress-bar bg-info" role="progressbar"
+                                        style="width: 50%" aria-valuenow="50" aria-valuemin="0"
+                                        aria-valuemax="100"></div>
+                                </div>
+                            </div> -->
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-archive-fill fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Num of Tags -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card callout-success shadow h-100 py-2 border border-success">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Tags</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="tagsNum">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-tags-fill fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- Content Row -->
+
+<!-- Tag Management -->
+<div class="row">
+    <div class="col">
+        <div class="card shadow mb-4 border border-light px-0">
+            <!-- Card Header - Dropdown -->
+            <button class="card-header accordion-button bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#tagManagement-collapse">
+                <!-- <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between bg-light"> -->
+                    <h6 class="m-0 font-weight-bold text-info">
+                        Tag Management
+                    </h6>
+                <!-- </div> -->
+            </button>
+            <!-- Card Body -->
+            <div id="tagManagement-collapse" class="accordion-collapse collapse show">
+                <div class="card-body " id="tagManagement">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block js %} 
+{{ block.super }}
+
+<script type="text/javascript">
+
+// Active tab
+$('#userProfileTab').children('a').removeClass('text-light')
+$('#userProfileTab').children('a').addClass('active')
+
+</script>
+
+{% csrf_token %}
+<script type="text/javascript">
+const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+function loadProfile(){
+    $.ajax({
+        url: window.location.origin + 
+        `/api/user_profile/?format=json`,
+        type: 'GET',
+        cache: false,
+        timeout: 30000,
+        success: function(data) {
+            $('#readPaperNum').html(data.read_papers)
+            $('#starPaperNum').html(data.star_papers)
+            $('#archivePaperNum').html(data.archive_papers)
+            var tagsNum = 0;
+            $('#tagManagement').empty();
+            var tagNames = Object.keys(data.tags);
+            // Sort by alphabet
+            tagNames.sort(function(a, b) {
+                a = a.toUpperCase(); // ignore upper and lowercase
+                b = b.toUpperCase(); // ignore upper and lowercase
+                if (a < b) {
+                    return -1;
+                }
+                if (a > b) {
+                    return 1;
+                }
+                // names must be equal
+                return 0;
+            });
+            for (const tagName of tagNames){
+                tagsNum += data.tags[tagName]
+                $('#tagManagement').append( 
+                `<span class="badge bg-info">
+                    <form class="tagChangeForm">
+                    <input type="text" class="tagChangeInput bg-transparent border-0" data-name="${tagName}" value="${tagName}" size="${tagName.length}">
+                    | ${data.tags[tagName]} 
+                    </form>
+                </span>` )
+            }
+            $('#tagsNum').html(tagsNum)
+
+            // Bind event
+            $( "#tagManagement" ).find(".tagChangeForm").submit(function() {
+                // alert('xxx')
+                event.preventDefault();
+            });
+            $( "#tagManagement" ).find(".tagChangeInput").change(function() {
+                // alert( `Handler for .change() called.   ${this.value} ${this.dataset.name}` );
+                if (this.value != this.dataset.name){
+                    var oldtag = this.dataset.name;
+                    var newtag = this.value;
+                    $.ajax({
+                        url: window.location.origin + `/api/rename_tag/?oldtag=${oldtag}&newtag=${newtag}`,
+                        type: 'POST',
+                        data: {
+                            csrfmiddlewaretoken: csrfToken,
+                            format: "json"
+                        },
+                        success: function(data) {
+                            loadProfile();
+                        }
+                    });
+                }
+                event.preventDefault();
+            });
+        },
+        dataType: "json",
+    });
+}
+loadProfile();
+</script>
 {% endblock %}

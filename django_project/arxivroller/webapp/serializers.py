@@ -7,14 +7,16 @@ from rest_framework.views import APIView
 from rest_framework.decorators import api_view
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect
-from django.db import transaction
-from django.db.models import Q, F, Func
+from django.db import transaction, models
+from django.db.models import Q, F, Func, Value
 from django.conf import settings
+from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.search import SearchQuery, SearchVector, SearchRank
 
 import time
 import json
-
+import collections
+    
 if settings.DEBUG:
     logger = print 
 else:
@@ -210,7 +212,7 @@ class PreferenceSerializer(serializers.ModelSerializer):
 @api_view(['GET', 'POST'])
 def user_tags(request, format=None):
     """
-    List all code snippets, or create a new snippet.
+    Get all tags of a user
     """
     start_time = time.time()
     user = request.user
@@ -220,7 +222,7 @@ def user_tags(request, format=None):
     tags = list(tags)
     q = request.query_params.get('q', None)
     if q is not None:
-        tags = [t for t in tags if q in t.lower()]
+        tags = [t for t in tags if q.lower() in t.lower()]
     # tags = json.dumps(tags)
     print(f"Query Cost: {time.time()-start_time:.4f}")
     
@@ -229,11 +231,58 @@ def user_tags(request, format=None):
     assert request.method == 'GET'
     return Response(tags)
 
+@api_view(['POST'])
+def rename_tag(request, format=None):
+    """
+    Get all tags of a user
+    """
+    oldtag = request.query_params['oldtag']
+    newtag = request.query_params['newtag']
+    user = request.user
+    logger(f"Rename Tag: {oldtag} -> {newtag}")
+
+    papers = UserPaper.objects.filter(user = user)
+    papers.update(tags = Func(F('tags'), Value(oldtag), Value(newtag), output_field=ArrayField(models.CharField(max_length=100), default=list, blank=True), function='ARRAY_REPLACE'))
+
+    assert request.method == 'POST'
+    return Response({})
+
+@api_view(['GET', 'POST'])
+def user_profile(request, format=None):
+    """
+    Get all statistics for a user
+    """
+    start_time = time.time()
+    user = request.user
+
+    papers = UserPaper.objects.filter(user = user)
+
+    tags = papers.annotate(tags_els=Func(F('tags'), function='unnest'))\
+                .values_list('tags_els', flat=True)
+    tags = collections.Counter(list(tags))
+
+    read_papers = sum(papers.values_list('read_status', flat=True))
+    star_papers = sum(papers.values_list('star_status', flat=True))
+    archive_papers = sum(papers.values_list('archive_status', flat=True))
+
+
+    print(f"Query Cost: {time.time()-start_time:.4f}")
+    
+    # logger(tags.query)
+    # logger(tags)
+    assert request.method == 'GET'
+    return Response({
+        'tags': tags,
+        'read_papers': read_papers,
+        'star_papers': star_papers,
+        'archive_papers': archive_papers,
+    })
+
 
 @api_view(['GET', 'POST'])
 def user_preference(request, format=None):
     """
-    List all code snippets, or create a new snippet.
+    Get user preference
     """
     user = request.user
     if hasattr(user, 'userpreference'):
@@ -263,7 +312,7 @@ def user_preference(request, format=None):
 @api_view(['GET', 'POST'])
 def user_paper(request, format=None):
     """
-    List all code snippets, or create a new snippet.
+    Get status for a given paper
     """
     user = request.user
     paper_id = request.query_params.get('paper_id', None)

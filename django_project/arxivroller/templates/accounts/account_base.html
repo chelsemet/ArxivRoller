@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block css %} 
+{{ block.super }}
+<style>
+body{
+color: #bcd0f7;
+    background: #1A233A;
+}
+.account-settings .user-profile {
+    margin: 0 0 1rem 0;
+    padding-bottom: 1rem;
+    text-align: center;
+}
+.account-settings .user-profile .user-avatar {
+    margin: 0 0 1rem 0;
+}
+.account-settings .user-profile .user-avatar img {
+    width: 90px;
+    height: 90px;
+    -webkit-border-radius: 100px;
+    -moz-border-radius: 100px;
+    border-radius: 100px;
+}
+.account-settings .user-profile h5.user-name {
+    margin: 0 0 0.5rem 0;
+}
+.account-settings .user-profile h6.user-email {
+    margin: 0;
+    font-size: 0.8rem;
+    font-weight: 400;
+}
+.account-settings .about {
+    margin: 1rem 0 0 0;
+    font-size: 0.8rem;
+    text-align: center;
+}
+.card {
+    background: #272E48;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+    /* border: 1px solid #596280; */
+    /* border: 0; */
+    /* margin-bottom: 1rem; */
+}
+.border-light {
+    border-color: #596280 !important;
+}
+.bg-light {
+    background: #596280 !important;
+}
+.form-control {
+    border: 1px solid #596280;
+    -webkit-border-radius: 2px;
+    -moz-border-radius: 2px;
+    border-radius: 2px;
+    font-size: .825rem;
+    background: #1A233A;
+    color: #bcd0f7;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-2 pt-2" id="profile-container">
+
+    <div class="row g-3">
+        <div class="col-xl-3 col-lg-3 col-md-12 col-sm-12 col-12">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="account-settings pt-4">
+                        <div class="user-profile">
+                            <div class="user-avatar">
+                                <img src="https://bootdey.com/img/Content/avatar/avatar1.png" alt="Maxwell Admin">
+                            </div>
+                            <h5 class="user-name">{{user.get_username }}</h5>
+                            <h6 class="user-email">{{user.email }}</h6>
+                        </div>
+                        <div class="about">
+                            <h5 class="mb-2 text-light">Hello</h5>
+                            <p>This is your profile page.</p>
+                            <p>This page is under construction.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-9 col-lg-9 col-md-12 col-sm-12 col-12">
+            <div class="card h-100">
+                <div class="card-body">
+                    <ul class="nav nav-tabs">
+                        <li class="nav-item" id="userProfileTab">
+                            <a class="nav-link text-light" href="{% url 'user_profile' %}">Profile</a>
+                        </li>
+                        <li class="nav-item" id="userSettingTab">
+                            <a class="nav-link text-light" href="{% url 'user_setting' %}">Setting</a>
+                        </li>
+                        <li class="nav-item" id="passwordTab">
+                            <a class="nav-link text-light" href="{% url 'change_password' %}">Password</a>
+                        </li>
+                    </ul>
+                    {% block profilecontent %}
+                    {% endblock %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+</div>
+{% endblock %}

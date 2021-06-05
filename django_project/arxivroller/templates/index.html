@@ -1440,7 +1440,7 @@ function initTagsMultiSelect() {
         closeOnSelect: false,
         placeholder: 'Select Tags Here',
         allowClear: true,
-        tokenSeparators: [','],
+        tokenSeparators: [',',';'],
         ajax: {
             url: window.location.origin + 
                 `/api/user_tags/?format=json`,

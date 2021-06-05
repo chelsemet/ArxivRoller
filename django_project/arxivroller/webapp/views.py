@@ -19,6 +19,10 @@ import json
 
 @login_required(login_url='/accounts/login_require')
 def user_profile(request):
+    return render(request, 'accounts/profile.html')
+
+@login_required(login_url='/accounts/login_require')
+def user_setting(request):
     if request.method == "POST":
         form = ProfileForm(request.POST)
         if form.is_valid():
@@ -31,7 +35,7 @@ def user_profile(request):
             form = ProfileForm()
     else:
         form = ProfileForm()
-    return render(request, 'accounts/profile.html', {'form': form})
+    return render(request, 'accounts/setting.html', {'form': form})
 
 
 @login_required(login_url='/accounts/login_require')

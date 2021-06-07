@@ -20,6 +20,7 @@ ROOT_URL=settings.SEMANTIC_SCHOLAR_URL+"/v1/paper/"
 PAGE_ROOT_URL="https://api.semanticscholar.org/"
 
 def query_page_s2(paper_id, try_get_pdf=True):
+    paper_id = paper_id.strip()
     if S2_KEY is None:
         response = requests.get(ROOT_URL + paper_id)
         time.sleep(0.1)
@@ -42,11 +43,11 @@ def query_page_s2(paper_id, try_get_pdf=True):
         'citation_velocity': api_data['citationVelocity'],
         'corpus_id': api_data['corpusId'],
         'doi': str(api_data['doi']),
-        'fields_of_study': api_data['fieldsOfStudy'],
+        'fields_of_study': api_data['fieldsOfStudy'] if api_data.get('fieldsOfStudy', None) is not None else [],
         'influential_citation_count': api_data['influentialCitationCount'],
         'is_open_access': api_data['isOpenAccess'],
         'is_publisher_licensed': api_data['isPublisherLicensed'],
-        'topics': [t['topic'] for t in api_data['topics']],
+        'topics': [t['topic'] for t in api_data['topics']] if api_data.get('topics', None) is not None else [],
         'url': str(api_data['url']),
         'venue': str(api_data['venue']),
         'year': api_data['year'],

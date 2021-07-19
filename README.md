@@ -132,21 +132,6 @@ STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesSto
 ```
 Then in your deployment code, please run command `python manage.py compress --force` after `collectstatic`, this command would compile scss files
 
-## TODO List
-
-- [ ] Advanced Search UI
-- [ ] Keyboard support for switching paper cards
-- [ ] Browse History
-- [ ] Support use semantic scholar/native arxiv/google scholar search (by scraping? lol).
-- [ ] Take Notes (like blog?)
-- [ ] Improve Mobile Experience
-- [ ] Replace Abstract by 'TL;DR' in paper cards. Use GPT ? LOL
-- [ ] Highly Customizable Feed. Use a bundle of search rules.
-- [ ] Better Account homepage management
-- [ ] Visual Analyze/Management of papers? (e.g. how many paper read)
-- [ ] Paper recommendation.
-- [ ] If we have more users, build community by sharing stars, notes, tags?
-- [ ] Import papers from other catrgories.
 
 
 

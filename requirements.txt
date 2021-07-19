@@ -23,3 +23,5 @@ nltk
 transformers==4.5.1
 -f https://download.pytorch.org/whl/torch_stable.html
 torch==1.8.1+cpu
+dropbox==11.13.3
+django-storages==1.11.1

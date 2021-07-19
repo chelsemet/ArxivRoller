@@ -26,17 +26,16 @@ with open(BASE_DIR / 'credential' / 'secret_key', 'r') as f:
     SECRET_KEY = f.read().strip()
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 if not DEBUG:
     ALLOWED_HOSTS = ['127.0.0.1',
-                    '20.42.105.56',
+                    '34.71.4.3',
                     'localhost',
                     'www.jhaoming.com',
                     'arxiv.jhaoming.com',
                     'www.gtflashlab.com',
                     'arxiv.gtflashlab.com',
-                    'gtflashlab.eastus.cloudapp.azure.com',
                     ]
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
@@ -119,9 +118,18 @@ DATABASES = {
     }
 }
 
-# Backup
-DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
-DBBACKUP_STORAGE_OPTIONS = {'location': '/mnt/db_backup'}
+# Backup (Local)
+# DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
+# DBBACKUP_CLEANUP_KEEP = 1
+# DBBACKUP_STORAGE_OPTIONS = {'location': '/mnt/db_backup'}
+# Backup (Dropbox)
+with open(BASE_DIR / 'credential' / 'dropbox.json', 'r') as f:
+    DROPBOX_CRED = json.load(f)
+DBBACKUP_STORAGE = 'storages.backends.dropbox.DropBoxStorage'
+DBBACKUP_CLEANUP_KEEP = 1
+DBBACKUP_STORAGE_OPTIONS = {
+    'oauth2_access_token': DROPBOX_CRED['oauth2_access_token'],
+}
 
 
 # Password validation

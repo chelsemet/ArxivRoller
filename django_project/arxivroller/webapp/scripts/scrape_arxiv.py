@@ -7,15 +7,6 @@ from datetime import datetime, timedelta, timezone
 from urllib.parse import urlencode
 from xml.etree import ElementTree
 
-# MAX_PAPER=50000
-# SCRAPE_ORDERS=['descending','ascending']
-# SCRAPE_DATE = None
-
-MAX_PAPER=1000
-SCRAPE_ORDERS=['descending']
-SCRAPE_DATE=datetime.now(timezone.utc) - timedelta(days=7) 
-print(SCRAPE_DATE)
-
 def parse_cats(cats):
     cats = set(cats)
     # Download all Papers
@@ -36,7 +27,22 @@ def parse_cats(cats):
 def run(*args):
     session = requests.Session()
 
-    if len(args) > 0:
+    MAX_PAPER=1000
+    SCRAPE_ORDERS=['descending']
+    SCRAPE_DATE=datetime.now(timezone.utc) - timedelta(days=7) 
+    print(SCRAPE_DATE)
+    
+    if len(args) == 1 and (args[0] == 'DOWNLOAD_ALL_PAPERS'):
+        cats = parse_cats('ml eess stat cs'.split(' '))
+        MAX_PAPER=50000
+        SCRAPE_ORDERS=['descending','ascending']
+        SCRAPE_DATE = None
+    elif len(args) == 1 and (args[0] == 'DOWNLOAD_ALL_ML_PAPERS'):
+        cats = parse_cats(settings.PAPERS_MACHINE_LEARNING_CATEGORIES)
+        MAX_PAPER=50000
+        SCRAPE_ORDERS=['descending','ascending']
+        SCRAPE_DATE = None
+    elif len(args) > 0:
         cats = parse_cats(args)
     else:
         cats = set(settings.PAPERS_MACHINE_LEARNING_CATEGORIES)
@@ -98,5 +104,3 @@ def run(*args):
                     or (order == "descending" and SCRAPE_DATE is not None and results[-1][0].updated < SCRAPE_DATE):
                     max_papers = min(max_papers-(i+1)*chunk_size + 1000, max_papers)
                     break
-        
-        
